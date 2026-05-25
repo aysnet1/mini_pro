@@ -32,7 +32,7 @@ export default [
    * pluginVue.configs["flat/recommended"]
    *   -> Above, plus rules to enforce subjective community defaults to ensure consistency.
    */
-  ...pluginVue.configs[ 'flat/essential' ],
+  ...pluginVue.configs['flat/essential'],
 
   {
     languageOptions: {
@@ -53,6 +53,7 @@ export default [
 
     // add your custom rules here
     rules: {
+      'vue/multi-word-component-names': 'off',
       'prefer-promise-reject-errors': 'off',
 
       // allow debugger during development only
@@ -61,7 +62,7 @@ export default [
   },
 
   {
-    files: [ 'src-pwa/custom-service-worker.js' ],
+    files: ['src-pwa/custom-service-worker.js'],
     languageOptions: {
       globals: {
         ...globals.serviceworker

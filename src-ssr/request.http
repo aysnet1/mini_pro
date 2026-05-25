@@ -1,0 +1,340 @@
+@baseUrl = http://localhost:9100
+@json = application/json
+
+### =====================================================
+### TAKELOG - TEST COMPLET DE TOUTES LES API ACTIVES
+### =====================================================
+### Ordre conseillé :
+### 1. Register admin / propriétaire / étudiant
+### 2. Login des 3 comptes
+### 3. Tests users
+### 4. Tests logements
+### 5. Tests accueil / recherche
+### 6. Tests réservation / messages / avis
+###
+### Important :
+### - Toutes les routes protégées utilisent Authorization: Bearer <token>
+### - Les IDs sont récupérés automatiquement depuis les réponses précédentes
+### - La route /api/ai n'est pas active actuellement
+
+
+### =====================================================
+### AUTH - INSCRIPTION DES COMPTES DE TEST
+### =====================================================
+
+### Admin de test
+# @name register_admin
+POST {{baseUrl}}/api/users/register
+Content-Type: {{json}}
+
+{
+  "nom": "Admin",
+  "prenom": "System",
+  "email": "admin.test@takelog.local",
+  "password": "123456",
+  "role": "admin",
+  "photo_profil": "https://i.pravatar.cc/300?img=12"
+}
+
+### Propriétaire de test
+# @name register_owner
+POST {{baseUrl}}/api/users/register
+Content-Type: {{json}}
+
+{
+  "nom": "Ben Salah",
+  "prenom": "Amine",
+  "email": "owner.test@takelog.local",
+  "password": "123456",
+  "role": "proprietaire",
+  "tel": "22111222",
+  "adress": "Centre Urbain Nord, Tunis",
+  "type": "particulier",
+  "photo_profil": "https://i.pravatar.cc/300?img=15"
+}
+
+### Étudiant de test
+# @name register_student
+POST {{baseUrl}}/api/users/register
+Content-Type: {{json}}
+
+{
+  "nom": "Trabelsi",
+  "prenom": "Yassine",
+  "email": "student.test@takelog.local",
+  "password": "123456",
+  "role": "etudiant",
+  "tel": "55123456",
+  "budget": 850,
+  "habitudes": "calme,non-fumeur,studieux",
+  "universite": "Université de Tunis El Manar",
+  "recherche_ville": "Tunis",
+  "photo_profil": "https://i.pravatar.cc/300?img=22"
+}
+
+
+### =====================================================
+### AUTH - CONNEXION
+### =====================================================
+
+### Login admin
+# @name login_admin
+POST {{baseUrl}}/api/users/signin
+Content-Type: {{json}}
+
+{
+  "email": "admin.test@takelog.local",
+  "mot_de_passe": "123456"
+}
+
+### Login propriétaire
+# @name login_owner
+POST {{baseUrl}}/api/users/signin
+Content-Type: {{json}}
+
+{
+  "email": "owner.test@takelog.local",
+  "mot_de_passe": "123456"
+}
+
+### Login étudiant
+# @name login_student
+POST {{baseUrl}}/api/users/signin
+Content-Type: {{json}}
+
+{
+  "email": "student.test@takelog.local",
+  "mot_de_passe": "123456"
+}
+
+
+### =====================================================
+### USERS - ROUTES PROTÉGÉES
+### =====================================================
+
+### Créer un utilisateur via admin
+# @name create_user_as_admin
+POST {{baseUrl}}/api/users
+Content-Type: {{json}}
+Authorization: Bearer {{login_admin.response.body.$.token}}
+
+{
+  "nom": "Nouveau",
+  "prenom": "Compte",
+  "email": "new.user@takelog.local",
+  "mot_de_passe": "123456",
+  "telephone": "99887766",
+  "role": "etudiant",
+  "photo_profil": "https://i.pravatar.cc/300?img=45"
+}
+
+### Récupérer tous les utilisateurs (admin)
+GET {{baseUrl}}/api/users
+Authorization: Bearer {{login_admin.response.body.$.token}}
+
+### Récupérer le profil étudiant connecté
+GET {{baseUrl}}/api/users/{{login_student.response.body.$.user.id}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Mettre à jour le profil étudiant
+PUT {{baseUrl}}/api/users/{{login_student.response.body.$.user.id}}
+Content-Type: {{json}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+{
+  "nom": "Trabelsi",
+  "prenom": "Yassine Maj",
+  "email": "student.test@takelog.local",
+  "tel": "55123456",
+  "budget": 900,
+  "habitudes": "calme,propre,studieux",
+  "universite": "Université de Tunis El Manar",
+  "recherche_ville": "Tunis"
+}
+
+### Supprimer un utilisateur (manuel)
+### Remplacez 999 par l'id réel si vous voulez tester la suppression.
+DELETE {{baseUrl}}/api/users/999
+Authorization: Bearer {{login_admin.response.body.$.token}}
+
+
+### =====================================================
+### LOGEMENTS - PROPRIÉTAIRE
+### =====================================================
+
+### Ajouter un logement 1
+# @name create_logement_1
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue de Marseille, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8065,
+  "longitude": 10.1815,
+  "type": "appartement",
+  "prix": 600,
+  "nb_places":4,
+  "equipemens": ["wifi", "cuisine", "chauffage"],
+  "description": "Appartement adapté aux étudiants de l'Université de Tunis El Manar.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+### Ajouter un logement 2
+# @name create_logement_2
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Lac 2, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8380,
+  "longitude": 10.2729,
+  "type": "studio",
+  "prix": 650,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau"],
+  "description": "Studio calme proche des transports.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+### Mes logements (propriétaire connecté)
+GET {{baseUrl}}/api/logements/me
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+### Mettre à jour un logement
+PUT {{baseUrl}}/api/logements/{{create_logement_1.response.body.$.id}}
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "prix": 820,
+  "description": "Appartement modernisé, adapté aux étudiants de l'Université de Tunis El Manar.",
+  "statut": "disponible"
+}
+
+### Détail d'un logement public
+GET {{baseUrl}}/api/logements/{{create_logement_1.response.body.$.id}}
+
+
+### =====================================================
+### LOGEMENTS - RECHERCHE ÉTUDIANT
+### =====================================================
+
+### Recherche logement (filtrée automatiquement par recherche_ville étudiant)
+GET {{baseUrl}}/api/logements
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Recherche logement avec budget max
+GET {{baseUrl}}/api/logements?budget_max=900
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Recherche logement avec type
+GET {{baseUrl}}/api/logements?type=studio
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Recherche logement avec bbox carte
+GET {{baseUrl}}/api/logements?minLat=36.70&maxLat=36.90&minLng=10.10&maxLng=10.35
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Feed home personnalisé
+GET {{baseUrl}}/api/logements/home-feed
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+
+### =====================================================
+### RÉSERVATIONS
+### =====================================================
+
+### Réserver un logement en tant qu'étudiant
+POST {{baseUrl}}/api/reservations
+Content-Type: {{json}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+{
+  "etudiant_id": {{login_student.response.body.$.user.id}},
+  "logement_id": {{create_logement_1.response.body.$.id}},
+  "date_debut": "2026-09-01",
+  "date_fin": "2027-06-30",
+  "duree": 10
+}
+
+### Voir les occupants d'un logement (propriétaire)
+GET {{baseUrl}}/api/reservations/logement/{{create_logement_1.response.body.$.id}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+
+### =====================================================
+### MESSAGES
+### =====================================================
+
+### Envoyer un message étudiant -> propriétaire
+POST {{baseUrl}}/api/messages
+Content-Type: {{json}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+{
+  "expediteur_id": {{login_student.response.body.$.user.id}},
+  "destinataire_id": {{login_owner.response.body.$.user.id}},
+  "contenu": "Bonjour, le logement est-il toujours disponible ?"
+}
+
+### Voir la conversation étudiant / propriétaire
+GET {{baseUrl}}/api/messages/conversation/{{login_student.response.body.$.user.id}}/{{login_owner.response.body.$.user.id}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+
+### =====================================================
+### AVIS
+### =====================================================
+
+### Ajouter un avis étudiant
+POST {{baseUrl}}/api/avis
+Content-Type: {{json}}
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+{
+  "logement_id": {{create_logement_1.response.body.$.id}},
+  "auteur_id": {{login_student.response.body.$.user.id}},
+  "note": 5,
+  "commentaire": "Très bon logement, bien situé pour les études.",
+  "status": "publie"
+}
+
+### Récupérer les avis d'un logement
+GET {{baseUrl}}/api/avis/logement/{{create_logement_1.response.body.$.id}}
+
+
+### =====================================================
+### DÉCONNEXION
+### =====================================================
+
+POST {{baseUrl}}/api/users/logout
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+
+### =====================================================
+### SUPPRESSION DE TESTS (FACULTATIF)
+### =====================================================
+
+### Supprimer logement 2
+DELETE {{baseUrl}}/api/logements/{{create_logement_2.response.body.$.id}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+### Supprimer logement 1
+DELETE {{baseUrl}}/api/logements/{{create_logement_1.response.body.$.id}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+
+### =====================================================
+### API IA
+### =====================================================
+### Route actuellement non active dans le backend : /api/ai
