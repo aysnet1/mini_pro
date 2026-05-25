@@ -23,20 +23,12 @@
 
           <q-card-section>
             <q-form class="logement-form" @submit.prevent="createLogement">
-              <LogementLocationFields
-                :adress="form.adress"
-                :ville="form.ville"
-                :filtered-ville-options="filteredVilleOptions"
-                :filtered-adress-options="filteredAdressOptions"
-                :geocode-loading="geocodeLoading"
-                :adress-suggest-loading="adressSuggestLoading"
-                :geocode-error="geocodeError"
-                :required-rule="requiredRule"
-                @update:adress="(val) => { form.adress = val }"
-                @update:ville="(val) => { form.ville = val }"
-                @filter-villes="filterVilles"
-                @filter-adresses="filterAdresses"
-              />
+              <LogementLocationFields :adress="form.adress" :ville="form.ville"
+                :filtered-ville-options="filteredVilleOptions" :filtered-adress-options="filteredAdressOptions"
+                :geocode-loading="geocodeLoading" :adress-suggest-loading="adressSuggestLoading"
+                :geocode-error="geocodeError" :required-rule="requiredRule"
+                @update:adress="(val) => { form.adress = val }" @update:ville="(val) => { form.ville = val }"
+                @filter-villes="filterVilles" @filter-adresses="filterAdresses" />
 
               <div class="form-grid cols-3">
                 <div class="form-group">
@@ -162,53 +154,54 @@
         <div v-else class="logements-grid">
           <router-link v-for="item in ownerLogements" :key="item.id" :to="`/logements/${item.id}`" class="card-link">
             <q-card flat class="logement-card">
-            <div class="logement-photos">
-              <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
-                navigation arrows navigation-icon="circle" control-color="white" height="200px"
-                class="logement-carousel">
-                <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx" class="carousel-slide">
-                  <img :src="photo" class="carousel-img" />
-                  <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
-                    @click.stop="deletePhoto(item.id, photo)">
-                    <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
-                  </q-btn>
-                </q-carousel-slide>
-              </q-carousel>
+              <div class="logement-photos">
+                <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
+                  navigation arrows navigation-icon="circle" control-color="white" height="200px"
+                  class="logement-carousel">
+                  <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx"
+                    class="carousel-slide">
+                    <img :src="photo" class="carousel-img" />
+                    <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
+                      @click.stop="deletePhoto(item.id, photo)">
+                      <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
+                    </q-btn>
+                  </q-carousel-slide>
+                </q-carousel>
 
-              <div v-else class="no-photo-placeholder">
-                <q-icon name="image" size="48px" color="grey-5" />
-                <span>Aucune photo</span>
+                <div v-else class="no-photo-placeholder">
+                  <q-icon name="image" size="48px" color="grey-5" />
+                  <span>Aucune photo</span>
+                </div>
+
+                <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
+                  size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
+                  <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
+                    restantes)</q-tooltip>
+                </q-btn>
               </div>
 
-              <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
-                size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
-                <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
-                  restantes)</q-tooltip>
-              </q-btn>
-            </div>
-
-            <q-card-section class="logement-card-body">
-              <div class="logement-meta">
-                <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
-                  :label="item.statut || 'disponible'" />
-                <span class="logement-type-badge">{{ item.type }}</span>
-              </div>
-              <h3 class="logement-title">{{ item.adress }}</h3>
-              <div class="logement-details">
-                <div class="detail-item">
-                  <q-icon name="location_city" size="16px" />
-                  <span>{{ item.ville }}</span>
+              <q-card-section class="logement-card-body">
+                <div class="logement-meta">
+                  <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
+                    :label="item.statut || 'disponible'" />
+                  <span class="logement-type-badge">{{ item.type }}</span>
                 </div>
-                <div class="detail-item">
-                  <q-icon name="payments" size="16px" />
-                  <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
+                <h3 class="logement-title">{{ item.adress }}</h3>
+                <div class="logement-details">
+                  <div class="detail-item">
+                    <q-icon name="location_city" size="16px" />
+                    <span>{{ item.ville }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <q-icon name="payments" size="16px" />
+                    <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
+                  </div>
+                  <div v-if="item.nb_places" class="detail-item">
+                    <q-icon name="group" size="16px" />
+                    <span>{{ item.nb_places }} place(s)</span>
+                  </div>
                 </div>
-                <div v-if="item.nb_places" class="detail-item">
-                  <q-icon name="group" size="16px" />
-                  <span>{{ item.nb_places }} place(s)</span>
-                </div>
-              </div>
-            </q-card-section>
+              </q-card-section>
             </q-card>
           </router-link>
         </div>
