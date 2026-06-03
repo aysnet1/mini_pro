@@ -1,6 +1,6 @@
 import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware.js';
-import { isProprietaire } from '../middlewares/roleMiddleware.js';
+import { isAdmin, isProprietaire } from '../middlewares/roleMiddleware.js';
 import { uploadLogementPhotos, handleUploadErrors } from '../middlewares/uploadMiddleware.js';
 import {
   AddLogement,
@@ -10,6 +10,7 @@ import {
   GetLogementById,
   UpdateLogement,
   DeleteLogement,
+  SetLogementStatusByAdmin,
   UploadLogementPhotos,
   DeleteLogementPhoto
 } from '../controllers/LogementControllers.js';
@@ -22,6 +23,7 @@ logementroutes.get('/me', authMiddleware, isProprietaire, GetMyLogements);
 logementroutes.get('/', authMiddleware, GetAllLogements);
 logementroutes.get('/:id', GetLogementById);
 logementroutes.put('/:id', authMiddleware, isProprietaire, UpdateLogement);
+logementroutes.patch('/:id/status', authMiddleware, isAdmin, SetLogementStatusByAdmin);
 logementroutes.delete('/:id', authMiddleware, isProprietaire, DeleteLogement);
 
 // Photo upload / delete

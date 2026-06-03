@@ -5,7 +5,7 @@ import { genSalt, hash, compare } from 'bcrypt';
 /**
  * Contrôleur pour ajouter un nouvel utilisateur.
  * @route POST /
- * @access Public
+
  */
 const AddUser = async (req, res) => {
   try {
@@ -13,41 +13,94 @@ const AddUser = async (req, res) => {
       nom,
       prenom,
       email,
+      password,
       mot_de_passe,
+      tel,
       telephone,
       role,
-      photo_profil
+      photo_profil,
+      budget,
+      habitudes,
+      universite,
+      recherche_ville,
+      adress,
+      type
     } = req.body;
 
+    const plainPassword = password || mot_de_passe;
+    const userPhone = tel ?? telephone ?? null;
+
     // Vérification des champs obligatoires
-    if (!nom || !prenom || !email || !mot_de_passe || !role) {
+    if (!nom || !prenom || !email || !plainPassword || !role) {
       return res.status(400).json({
         error: "Champs requis manquants.",
       });
     }
+
+    // Validation des rôles autorisés
+    if (!["etudiant", "proprietaire", "admin"].includes(role)) {
+      return res.status(400).json({
+        error: "Rôle invalide.",
+      });
+    }
+
     //gérer un mot de passe (HashPwd) sécurisé
     const salt = await genSalt(10);
-    const HashPwd = await hash(mot_de_passe, salt);
+    const HashPwd = await hash(plainPassword, salt);
 
-    await mysql.query(
-      `INSERT INTO user
-      (nom, prenom, email, password, tel, role, photo_profil)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        nom,
-        prenom,
-        email,
-        HashPwd,
-        telephone || null,
-        role,
-        photo_profil || null
-      ]
-    );
+    const connection = await mysql.getConnection();
+    await connection.beginTransaction();
 
-    res.status(201).json({
-      message: "Utilisateur créé avec succès.",
-      email,
-    });
+    try {
+      const [userResult] = await connection.query(
+        `INSERT INTO user
+        (nom, prenom, email, password, tel, role, photo_profil)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          nom,
+          prenom,
+          email,
+          HashPwd,
+          userPhone,
+          role,
+          photo_profil || null
+        ]
+      );
+
+      const userId = userResult.insertId;
+
+      if (role === "etudiant") {
+        await connection.query(
+          `INSERT INTO etudiant (id, budget, habitudes, universite, recherche_ville)
+          VALUES (?, ?, ?, ?, ?)`,
+          [userId, budget || null, habitudes || null, universite || null, recherche_ville || null]
+        );
+      } else if (role === "proprietaire") {
+        await connection.query(
+          `INSERT INTO proprietaire (id, adress, type)
+          VALUES (?, ?, ?)`,
+          [userId, adress || null, type || null]
+        );
+      }
+
+      await connection.commit();
+
+      res.status(201).json({
+        message: "Utilisateur créé avec succès.",
+        user: {
+          id: userId,
+          nom,
+          prenom,
+          email,
+          role
+        }
+      });
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
 
   } catch (err) {
 
@@ -68,7 +121,7 @@ const AddUser = async (req, res) => {
 /**
  * Contrôleur pour récupérer tous les utilisateurs.
  * @route GET /users
- * @access Public
+
  */
 const GetAllUser = async (req, res) => {
   try {
@@ -100,7 +153,7 @@ const GetAllUser = async (req, res) => {
 /**
  * Contrôleur pour récupérer un utilisateur par son identifiant.
  * @route GET /:id
- * @access Public
+
  */
 const GetUser = async (req, res) => {
   try {
@@ -150,13 +203,14 @@ const GetUser = async (req, res) => {
 /**
  * Contrôleur pour modifier un utilisateur par son identifiant.
  * @route PUT /:id
- * @access Public
+
  */
 const UpdateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const {
       nom, prenom, email, tel, photo_profil,
+      password, mot_de_passe,
       budget, habitudes, universite, recherche_ville,
       adress, type
     } = req.body;
@@ -184,6 +238,12 @@ const UpdateUser = async (req, res) => {
       if (email !== undefined) userUpdates.email = email;
       if (tel !== undefined) userUpdates.tel = tel;
       if (photo_profil !== undefined) userUpdates.photo_profil = photo_profil;
+
+      const nextPassword = password || mot_de_passe;
+      if (nextPassword) {
+        const salt = await genSalt(10);
+        userUpdates.password = await hash(nextPassword, salt);
+      }
 
       if (Object.keys(userUpdates).length > 0) {
         await connection.query("UPDATE user SET ? WHERE id = ?", [userUpdates, id]);
@@ -241,7 +301,7 @@ const UpdateUser = async (req, res) => {
 /**
  * Contrôleur pour supprimer un utilisateur par son identifiant.
  * @route DELETE /:id
- * @access Public
+
  */
 const DeleteUser = async (req, res) => {
   try {
@@ -275,7 +335,7 @@ const DeleteUser = async (req, res) => {
 /**
  * Contrôleur de connexion utilisateur (signin).
  * @route POST /signin
- * @access Public
+
  */
 
 const SigninUser = async (req, res) => {
@@ -362,7 +422,7 @@ const SigninUser = async (req, res) => {
 /**
  * Contrôleur pour inscrire un utilisateur (Register).
  * @route POST /register
- * @access Public
+
  */
 const RegisterUser = async (req, res) => {
   try {
@@ -410,6 +470,8 @@ const RegisterUser = async (req, res) => {
           [userId, adress || null, type || null]
         );
       } else if (role === 'admin') {
+        //       await connection.rollback();
+        //   return res.status(403).json({ error: "Inscription d'admin non autorisée." });
         await connection.query(
           `INSERT INTO admin (id, permissions) VALUES (?, ?)`,
           [userId, JSON.stringify(["all"])] // Exemple de permissions par défaut
@@ -467,6 +529,62 @@ const RegisterUser = async (req, res) => {
   }
 };
 
+/**
+ * Statistiques globales pour le dashboard admin.
+ * @route GET /admin/stats
+ * @access Admin
+ */
+const GetAdminStats = async (req, res) => {
+  try {
+    const [[usersCount]] = await mysql.query(
+      'SELECT COUNT(*) AS total_users FROM user'
+    );
+
+    const [[adminsCount]] = await mysql.query(
+      "SELECT COUNT(*) AS total_admins FROM user WHERE role = 'admin'"
+    );
+
+    const [[ownersCount]] = await mysql.query(
+      "SELECT COUNT(*) AS total_owners FROM user WHERE role = 'proprietaire'"
+    );
+
+    const [[studentsCount]] = await mysql.query(
+      "SELECT COUNT(*) AS total_students FROM user WHERE role = 'etudiant'"
+    );
+
+    const [[logementsCount]] = await mysql.query(
+      'SELECT COUNT(*) AS total_logements FROM logement'
+    );
+
+    const [[activeLogementsCount]] = await mysql.query(
+      "SELECT COUNT(*) AS total_active_logements FROM logement WHERE statut <> 'desactive' OR statut IS NULL"
+    );
+
+    const [[disabledLogementsCount]] = await mysql.query(
+      "SELECT COUNT(*) AS total_disabled_logements FROM logement WHERE statut = 'desactive'"
+    );
+
+    res.status(200).json({
+      users: {
+        total: Number(usersCount.total_users || 0),
+        admins: Number(adminsCount.total_admins || 0),
+        proprietaires: Number(ownersCount.total_owners || 0),
+        etudiants: Number(studentsCount.total_students || 0)
+      },
+      logements: {
+        total: Number(logementsCount.total_logements || 0),
+        actifs: Number(activeLogementsCount.total_active_logements || 0),
+        desactives: Number(disabledLogementsCount.total_disabled_logements || 0)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: 'Erreur de récupération des statistiques admin.',
+      details: err.message,
+    });
+  }
+};
+
 const LogoutUser = (req, res) => {
   res.clearCookie('auth_token', {
     sameSite: "strict",
@@ -482,6 +600,7 @@ export {
   GetUser,
   UpdateUser,
   DeleteUser,
+  GetAdminStats,
   SigninUser,
   RegisterUser,
   LogoutUser

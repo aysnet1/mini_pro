@@ -1,22 +1,6 @@
 @baseUrl = http://localhost:9100
 @json = application/json
 
-### =====================================================
-### TAKELOG - TEST COMPLET DE TOUTES LES API ACTIVES
-### =====================================================
-### Ordre conseillé :
-### 1. Register admin / propriétaire / étudiant
-### 2. Login des 3 comptes
-### 3. Tests users
-### 4. Tests logements
-### 5. Tests accueil / recherche
-### 6. Tests réservation / messages / avis
-###
-### Important :
-### - Toutes les routes protégées utilisent Authorization: Bearer <token>
-### - Les IDs sont récupérés automatiquement depuis les réponses précédentes
-### - La route /api/ai n'est pas active actuellement
-
 
 ### =====================================================
 ### AUTH - INSCRIPTION DES COMPTES DE TEST
@@ -260,8 +244,7 @@ Content-Type: {{json}}
 Authorization: Bearer {{login_student.response.body.$.token}}
 
 {
-  "etudiant_id": {{login_student.response.body.$.user.id}},
-  "logement_id": {{create_logement_1.response.body.$.id}},
+  "logement_id": "{{create_logement_1.response.body.$.id}}",
   "date_debut": "2026-09-01",
   "date_fin": "2027-06-30",
   "duree": 10
@@ -270,6 +253,38 @@ Authorization: Bearer {{login_student.response.body.$.token}}
 ### Voir les occupants d'un logement (propriétaire)
 GET {{baseUrl}}/api/reservations/logement/{{create_logement_1.response.body.$.id}}
 Authorization: Bearer {{login_owner.response.body.$.token}}
+
+### Mes reservations (etudiant)
+GET {{baseUrl}}/api/reservations/me
+Authorization: Bearer {{login_student.response.body.$.token}}
+
+### Demandes recues (proprietaire)
+GET {{baseUrl}}/api/reservations/owner/me
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+### Accepter une demande (proprietaire)
+PATCH {{baseUrl}}/api/reservations/{{create_logement_1.response.body.$.id}}/etudiant/{{login_student.response.body.$.user.id}}/status
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "statut": "acceptee",
+  "note_proprietaire": "Votre demande est acceptee. Merci de confirmer votre arrivee."
+}
+
+### Refuser une demande (proprietaire)
+PATCH {{baseUrl}}/api/reservations/{{create_logement_1.response.body.$.id}}/etudiant/{{login_student.response.body.$.user.id}}/status
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "statut": "refusee",
+  "note_proprietaire": "Demande refusee pour indisponibilite de calendrier."
+}
+
+### Annuler ma reservation (etudiant)
+DELETE {{baseUrl}}/api/reservations/{{create_logement_1.response.body.$.id}}
+Authorization: Bearer {{login_student.response.body.$.token}}
 
 
 ### =====================================================
@@ -282,8 +297,8 @@ Content-Type: {{json}}
 Authorization: Bearer {{login_student.response.body.$.token}}
 
 {
-  "expediteur_id": {{login_student.response.body.$.user.id}},
-  "destinataire_id": {{login_owner.response.body.$.user.id}},
+  "expediteur_id": "{{login_student.response.body.$.user.id}}",
+  "destinataire_id": "{{login_owner.response.body.$.user.id}}",
   "contenu": "Bonjour, le logement est-il toujours disponible ?"
 }
 
@@ -302,8 +317,7 @@ Content-Type: {{json}}
 Authorization: Bearer {{login_student.response.body.$.token}}
 
 {
-  "logement_id": {{create_logement_1.response.body.$.id}},
-  "auteur_id": {{login_student.response.body.$.user.id}},
+  "logement_id": "{{create_logement_1.response.body.$.id}}",
   "note": 5,
   "commentaire": "Très bon logement, bien situé pour les études.",
   "status": "publie"

@@ -242,6 +242,66 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @col_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'etudiant_logement'
+        AND COLUMN_NAME = 'statut'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    "ALTER TABLE etudiant_logement ADD COLUMN statut VARCHAR(20) NOT NULL DEFAULT 'en_attente' AFTER duree",
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'etudiant_logement'
+        AND COLUMN_NAME = 'note_proprietaire'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    'ALTER TABLE etudiant_logement ADD COLUMN note_proprietaire VARCHAR(500) NULL AFTER statut',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'etudiant_logement'
+        AND COLUMN_NAME = 'updated_at'
+);
+SET @sql := IF(
+    @col_exists = 0,
+    'ALTER TABLE etudiant_logement ADD COLUMN updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER note_proprietaire',
+    'SELECT 1'
+);
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_exists := (
+    SELECT COUNT(*)
+    FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = 'etudiant_logement'
+        AND INDEX_NAME = 'idx_el_logement_statut'
+);
+SET @sql := IF(@idx_exists = 0, 'CREATE INDEX idx_el_logement_statut ON etudiant_logement (logement_id, statut)', 'SELECT 1');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 
 
 

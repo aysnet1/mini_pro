@@ -6,10 +6,48 @@ const routes = [
       { path: '', redirect: '/home' },
       { path: 'home', component: () => import('pages/HomePage.vue') },
 
-      { path: 'logements/:id', component: () => import('pages/LogementDetailPage.vue') },
-      { path: 'profile', component: () => import('pages/IndexPage.vue') },
-      { path: 'recherche', component: () => import('pages/RecherchePage.vue') },
-      { path: 'mes-logements', component: () => import('pages/MesLogementsPage.vue') },
+      { path: 'logements/:id', component: () => import('pages/logement/LogementDetailPage.vue') },
+      { path: 'profile', component: () => import('pages/etudiants/IndexPage.vue') },
+      { path: 'candidatures', component: () => import('pages/etudiants/MesReservationsPage.vue') },
+      { path: 'mes-reservations', component: () => import('pages/etudiants/MesReservationsPage.vue') },
+      { path: 'reservations', component: () => import('pages/proprietaires/ReservationsRecuesPage.vue') },
+      { path: 'recherche', component: () => import('pages/logement/RecherchePage.vue') },
+      { path: 'mes-logements', component: () => import('pages/proprietaires/MesLogementsPage.vue') },
+      {
+        path: 'admin',
+        redirect: '/admin/home',
+        meta: {
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'admin/dashboard',
+        redirect: '/admin/home',
+        meta: {
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'admin/home',
+        component: () => import('pages/admin/AdminHomePage.vue'),
+        meta: {
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'admin/users',
+        component: () => import('pages/admin/AdminUsersPage.vue'),
+        meta: {
+          requiresAdmin: true
+        }
+      },
+      {
+        path: 'admin/logements',
+        component: () => import('pages/admin/AdminLogementsPage.vue'),
+        meta: {
+          requiresAdmin: true
+        }
+      },
     ],
     meta: {
       requiresAuth: true

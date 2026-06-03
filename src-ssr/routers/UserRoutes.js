@@ -4,6 +4,7 @@ import { isAdmin } from '../middlewares/roleMiddleware.js';
 import {
   AddUser,
   GetAllUser,
+  GetAdminStats,
   GetUser,
   UpdateUser,
   DeleteUser,
@@ -17,6 +18,7 @@ const userroutes = express.Router();
 // users routes authentifiées
 userroutes.post('/', authMiddleware, isAdmin, AddUser)
 userroutes.post('/register', RegisterUser)
+userroutes.get('/admin/stats', authMiddleware, isAdmin, GetAdminStats)
 userroutes.get('/', authMiddleware, isAdmin, GetAllUser)
 userroutes.get('/:id', authMiddleware, GetUser)
 userroutes.put('/:id', authMiddleware, UpdateUser)

@@ -110,7 +110,11 @@ async function handleLogin() {
       timeout: 3000
     })
 
-    router.push('/')
+    if (authStore.user?.role === 'admin') {
+      router.push('/admin/home')
+    } else {
+      router.push('/')
+    }
   } catch (err) {
     errorMessage.value = err.message || 'Identifiants incorrects'
     $q.notify({

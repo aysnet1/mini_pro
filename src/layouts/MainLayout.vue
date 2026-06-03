@@ -80,27 +80,22 @@
               Menu principal
             </div>
 
-            <q-item clickable to="/home" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
-              <q-item-section avatar class="item-icon-section">
-                <LayoutDashboard :size="18" :stroke-width="2" />
-              </q-item-section>
-              <q-item-section class="text-weight-medium text-body2">Accueil Logements</q-item-section>
-            </q-item>
 
-            <q-item clickable to="/profile" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
-              <q-item-section avatar class="item-icon-section">
-                <User :size="18" :stroke-width="2" />
-              </q-item-section>
-              <q-item-section class="text-weight-medium text-body2">Mon Profil</q-item-section>
-            </q-item>
+
 
             <template v-if="user?.role === 'etudiant'">
+              <q-item clickable to="/home" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
+                <q-item-section avatar class="item-icon-section">
+                  <LayoutDashboard :size="18" :stroke-width="2" />
+                </q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Accueil</q-item-section>
+              </q-item>
               <q-item clickable to="/recherche" active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <Search :size="18" :stroke-width="2" />
                 </q-item-section>
-                <q-item-section class="text-weight-medium text-body2">Rechercher Logements</q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Explorer</q-item-section>
               </q-item>
 
               <q-item clickable to="/candidatures" active-class="sidebar-item-active"
@@ -108,7 +103,7 @@
                 <q-item-section avatar class="item-icon-section">
                   <ClipboardList :size="18" :stroke-width="2" />
                 </q-item-section>
-                <q-item-section class="text-weight-medium text-body2">Mes Demandes</q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Mes reservations</q-item-section>
               </q-item>
             </template>
 
@@ -130,12 +125,39 @@
               </q-item>
             </template>
 
-            <q-item clickable to="/messages" active-class="sidebar-item-active"
-              class="sidebar-nav-item rounded-borders">
+            <template v-else-if="user?.role === 'admin'">
+              <q-item clickable to="/admin/home" active-class="sidebar-item-active"
+                class="sidebar-nav-item rounded-borders">
+                <q-item-section avatar class="item-icon-section">
+                  <LayoutDashboard :size="18" :stroke-width="2" />
+                </q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Accueil</q-item-section>
+              </q-item>
+
+              <q-item clickable to="/admin/users" active-class="sidebar-item-active"
+                class="sidebar-nav-item rounded-borders">
+                <q-item-section avatar class="item-icon-section">
+                  <User :size="18" :stroke-width="2" />
+                </q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Gestion Utilisateurs</q-item-section>
+              </q-item>
+
+              <q-item clickable to="/admin/logements" active-class="sidebar-item-active"
+                class="sidebar-nav-item rounded-borders">
+                <q-item-section avatar class="item-icon-section">
+                  <Home :size="18" :stroke-width="2" />
+                </q-item-section>
+                <q-item-section class="text-weight-medium text-body2">Gestion Logements</q-item-section>
+              </q-item>
+            </template>
+
+
+
+            <q-item clickable to="/profile" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
               <q-item-section avatar class="item-icon-section">
-                <MessageSquare :size="18" :stroke-width="2" />
+                <User :size="18" :stroke-width="2" />
               </q-item-section>
-              <q-item-section class="text-weight-medium text-body2">Messagerie</q-item-section>
+              <q-item-section class="text-weight-medium text-body2">Mon Profil</q-item-section>
             </q-item>
           </div>
         </div>
@@ -169,7 +191,7 @@
       <router-view />
     </q-page-container>
 
-    <ChatStickyWidget :user-id="user?.id" />
+    <ChatStickyWidget v-if="user?.role === 'etudiant'" :user-id="user?.id" />
 
   </q-layout>
 </template>
@@ -184,7 +206,7 @@ import { useQuasar } from 'quasar'
 import {
   Menu, Building2, User, LogOut, Search,
   ClipboardList, Home, CalendarDays,
-  MessageSquare, LayoutDashboard
+   LayoutDashboard
 } from 'lucide-vue-next'
 import ChatStickyWidget from '@/components/chat/ChatStickyWidget.vue'
 

@@ -97,7 +97,7 @@
                             {{ item.prix }} DT<span class="text-[9px] font-normal text-zinc-400">/m</span>
                           </span>
                           <span class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider">{{ item.statut
-                          }}</span>
+                            }}</span>
                         </div>
                       </div>
                     </div>

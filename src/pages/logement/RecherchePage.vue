@@ -1,10 +1,7 @@
 <template>
   <q-page class="search-page">
     <div class="search-topbar">
-      <div class="top-pill">
-        <q-icon name="place" size="18px" />
-        <span>Logements dans la zone de la carte</span>
-      </div>
+
       <div class="top-filters">
         <q-select v-model="filters.ville" :options="villeOptions" dense borderless clearable emit-value map-options
           use-input fill-input hide-selected input-debounce="0" placeholder="Ville" class="filter-input"

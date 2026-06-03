@@ -113,11 +113,11 @@ export const chatBotFlow = ai.defineFlow(
     try {
       activeStreams.set(sessionKey, stream);
 
-      // Rebuild conversation history — only user/model turns, capped at last 6
+      // history
       const messages = chatHistory
         .filter(h => h.role === 'user' || h.role === 'model')
         .slice(-6)
-        .map(h => ({ role: h.role, content: [{ text: h.content ?? '' }] }));
+        .map(h => ({ role: h.role, content: [{ text: h.content ?? '' }] }))
 
       const chat = ai.chat({
         system: `Tu es un assistant de recherche de logement TakLog. Tu aides les utilisateurs à trouver des logements disponibles selon leurs critères (ville, budget, type). Utilise l'outil "searchLogements" dès que l'utilisateur mentionne une ville ou un budget. Présente les résultats de façon claire et concise.`,

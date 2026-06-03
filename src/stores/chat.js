@@ -7,7 +7,11 @@ function makeKey(userId, agentId) {
 
 function toUiMessage(row, userId, index) {
   const senderId = String(row.expediteur_id)
-  const backendRole = row.role || (senderId === String(userId) ? 'user' : 'bot')
+  const knownRoles = new Set(['user', 'model', 'tools'])
+  const backendRole = knownRoles.has(row.role)
+    ? row.role
+    : (senderId === String(userId) ? 'user' : 'model')
+  const uiRole = backendRole === 'user' ? 'user' : 'bot'
   let parsedWidgetData = null
   let parsedToolsPayload = null
 
@@ -21,7 +25,7 @@ function toUiMessage(row, userId, index) {
 
   const isToolsPayload =
     backendRole === 'tools' ||
-    (backendRole === 'bot' && parsedToolsPayload?.kind === 'tools_results')
+    (backendRole === 'model' && parsedToolsPayload?.kind === 'tools_results')
 
   if (isToolsPayload) {
     const parsed = parsedToolsPayload
@@ -33,7 +37,7 @@ function toUiMessage(row, userId, index) {
 
   return {
     id: `${row.id ?? Date.now()}_${index}`,
-    role: senderId === String(userId) ? 'user' : 'bot',
+    role: uiRole,
     backendRole,
     text: isToolsPayload ? '' : (row.contenu ?? ''),
     createdAt: row.date ? new Date(row.date).toISOString() : new Date().toISOString(),

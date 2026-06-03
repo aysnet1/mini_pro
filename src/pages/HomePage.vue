@@ -1,104 +1,78 @@
 <template>
-  <q-page class="p-4 md:p-8 bg-zinc-50/50">
-    <div class="max-w-7xl mx-auto space-y-8">
+  <q-page class="home-page">
+    <div class="page-container">
 
 
-      <div v-if="loading" class="min-h-[40vh] flex flex-col items-center justify-center space-y-3">
-        <q-spinner-inner color="dark" size="36px" />
-        <span class="text-[10px] div text-zinc-400 uppercase tracking-widest">Chargement du catalogue</span>
+      <div v-if="loading" class="loading-state">
+        <q-spinner-inner color="black" size="42px" />
+        <p class="loading-text">Chargement du catalogue...</p>
       </div>
 
       <template v-else>
-        <section v-for="section in sections" :key="section.key" class="space-y-4">
-          <div class="flex items-center justify-between">
+        <section v-for="section in sections" :key="section.key" class="section-block">
+          <div class="section-header">
             <div>
-              <div class="text-base md:text-lg  text-zinc-900 tracking-tight">
-                {{ section.title }}
-              </div>
-              <p v-if="section.hint" class="text-[11px] text-zinc-400 font-medium">
-                {{ section.hint }}
-              </p>
+              <h2 class="section-title">{{ section.title }}</h2>
+              <p v-if="section.hint" class="section-hint">{{ section.hint }}</p>
             </div>
-
-            <div class="text-[11px]  text-zinc-500 bg-zinc-100 px-2.5 py-1 rounded-md border border-zinc-200">
-              {{ section.items.length }} logements
-            </div>
+            <q-badge color="black" outline :label="`${section.items.length} logement(s)`" />
           </div>
 
-          <div v-if="section.items.length === 0"
-            class="flex flex-col items-center justify-center p-8 bg-white rounded-xl border border-dashed border-zinc-200">
-            <div class="p-2 bg-zinc-50 rounded-lg text-zinc-400 mb-2">
-              <Building :size="18" />
-            </div>
-            <p class="text-xs div text-zinc-800">Aucun logement trouvé</p>
+          <div v-if="section.items.length === 0" class="empty-state">
+            <q-icon name="holiday_village" size="58px" color="grey-5" />
+            <p class="empty-title">Aucun logement trouvé</p>
+            <p class="empty-subtitle">Ajustez vos préférences pour obtenir plus de résultats.</p>
           </div>
 
-          <div v-else class="relative">
-            <div class="scroll-container flex gap-5 overflow-x-auto pb-3 snap-x mandatory scrollbar-none">
+          <div v-else class="cards-strip">
+            <router-link v-for="item in section.items" :key="`${section.key}-${item.id}`" :to="`/logements/${item.id}`"
+              class="card-link">
+              <q-card flat class="logement-card ">
+                <div class="logement-image-wrap">
+                  <img :src="getPrimaryImage(item)" :alt="item.type" loading="lazy" class="logement-image" />
 
-              <router-link v-for="item in section.items" :key="`${section.key}-${item.id}`"
-                :to="`/logements/${item.id}`" class="card-link">
-                <article
-                  class="flex-none w-70 md:w-75 snap-start bg-white rounded-xl border border-zinc-200 overflow-hidden group hover:shadow-md transition-all duration-200">
-                  <div class="relative aspect-16/10 bg-zinc-100 overflow-hidden">
-                    <img :src="getPrimaryImage(item)" :alt="item.type" loading="lazy"
-                      class="w-full h-full object-cover transform scale-100 group-hover:scale-102 transition-transform duration-300 ease-out" />
+                  <div class="overlay-top">
+                    <q-badge color="black" text-color="white" :label="formatStatus(item.statut)" />
+                    <span class="places-chip">{{ formatPlaces(item.nb_places) }}</span>
+                  </div>
+                </div>
 
-                    <div class="absolute top-2.5 inset-x-2.5 flex items-center justify-between pointer-events-none">
-                      <span
-                        class="inline-flex items-center text-[9px] font-black uppercase tracking-wider text-zinc-950 bg-white/95 px-2 py-0.5 rounded shadow-sm border border-zinc-200">
-                        {{ formatStatus(item.statut) }}
-                      </span>
-                      <span
-                        class="inline-flex items-center text-[9px] div text-white bg-zinc-950/90 px-2 py-0.5 rounded shadow-sm">
-                        {{ formatPlaces(item.nb_places) }}
-                      </span>
-                    </div>
+                <q-card-section class="logement-card-body">
+                  <div class="logement-meta">
+                    <span class="logement-type">{{ capitalize(item.type) }}</span>
+                    <span class="dot-sep">•</span>
+                    <span class="logement-city">{{ item.ville }}</span>
                   </div>
 
-                  <div class="p-4 space-y-3">
-                    <div class="space-y-0.5">
-                      <div class="text-sm div text-zinc-900 truncate">
-                        {{ capitalize(item.type) }} · {{ item.ville }}
-                      </div>
-                      <div class="flex items-center text-[11px] font-medium text-zinc-400 truncate">
-                        <MapPin :size="12" class="mr-1 shrink-0 text-zinc-400" />
-                        <span>{{ item.adress }}</span>
-                      </div>
+                  <div class="detail-line">
+                    <MapPin :size="14" class="icon-muted" />
+                    <span class="truncate">{{ item.adress }}</span>
+                  </div>
+
+                  <p class="desc-line h-full">{{ getShortDescription(item.description) }}</p>
+
+                  <div v-if="getEquipmentPreview(item).length > 0" class="equipements-row">
+                    <span v-for="equipement in getEquipmentPreview(item)" :key="`${item.id}-${equipement}`"
+                      class="equip-chip">
+                      {{ equipement }}
+                    </span>
+                  </div>
+
+                  <div class="card-footer ">
+                    <div class="price-block">
+                      <span class="price-value">{{ formatPrice(item.prix).split(' ')[0] }}</span>
+                      <small>DT/mois</small>
                     </div>
 
-                    <p class="text-xs text-zinc-500 leading-normal line-clamp-2 min-h-8">
-                      {{ getShortDescription(item.description) }}
-                    </p>
-
-                    <div v-if="getEquipmentPreview(item).length > 0" class="flex flex-wrap gap-1">
-                      <span v-for="equipement in getEquipmentPreview(item)" :key="`${item.id}-${equipement}`"
-                        class="inline-flex text-[10px] font-medium text-zinc-600 bg-zinc-100 px-1.5 py-0.5 rounded">
-                        {{ equipement }}
-                      </span>
-                    </div>
-
-                    <div class="h-px bg-zinc-100 pt-0.5"></div>
-
-                    <div class="flex items-center justify-between pt-0.5">
-                      <div class="flex items-baseline text-zinc-900">
-                        <span class="text-sm font-black tracking-tight">{{ formatPrice(item.prix).split(' ')[0]
-                          }}</span>
-                        <span class="text-[10px]  text-zinc-400 ml-0.5">DT/mois</span>
-                      </div>
-
-                      <div
-                        class="flex items-center text-[11px] div text-zinc-900 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-100">
-                        <Star :size="11" class="text-zinc-950 fill-zinc-950 mr-1" />
-                        <span>{{ formatRating(item.rating) }}</span>
-                        <span class="text-[9px] text-zinc-400 font-normal ml-0.5">({{ item.avis_count || 0 }})</span>
-                      </div>
+                    <div class="rating-chip">
+                      <Star :size="12" class="star-icon" />
+                      <span>{{ formatRating(item.rating) }}</span>
+                      <small>({{ item.avis_count || 0 }})</small>
                     </div>
                   </div>
-                </article>
-              </router-link>
-
-            </div>
+                </q-card-section>
+              </q-card>
+            </router-link>
           </div>
         </section>
       </template>
@@ -110,7 +84,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
-import { MapPin, Star, Building } from 'lucide-vue-next'
+import { MapPin, Star } from 'lucide-vue-next'
 
 const $q = useQuasar()
 const authStore = useAuthStore()
@@ -231,17 +205,389 @@ onMounted(loadFeed)
 </script>
 
 <style scoped>
-.scroll-container {
+.home-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(15, 23, 42, 0.05), transparent 30%),
+    radial-gradient(circle at 100% 100%, rgba(100, 116, 139, 0.08), transparent 34%),
+    #f8fafc;
+}
+
+.page-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.page-header {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 18px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.page-title {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+}
+
+.page-subtitle {
+  margin: 6px 0 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.loading-state {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.loading-text {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.section-hint {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.empty-state {
+  background: #ffffff;
+  border: 1px dashed #d4dbe4;
+  border-radius: 14px;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.empty-title {
+  margin: 6px 0 0;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.empty-subtitle {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.88rem;
+}
+
+.cards-strip {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scroll-snap-type: x mandatory;
   -ms-overflow-style: none;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 
-.scroll-container::-webkit-scrollbar {
+.cards-strip::-webkit-scrollbar {
   display: none;
 }
 
 .card-link {
   text-decoration: none;
+  color: inherit;
+}
+
+.logement-card {
+  width: min(320px, 78vw);
+  min-width: min(320px, 78vw);
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  scroll-snap-align: start;
+}
+
+.logement-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.1);
+}
+
+.logement-image-wrap {
+  position: relative;
+  height: 190px;
+  background: #e2e8f0;
+  overflow: hidden;
+}
+
+.logement-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.overlay-top {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.places-chip {
+  background: rgba(15, 23, 42, 0.88);
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.logement-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.logement-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.logement-type {
+  font-weight: 700;
+  color: #111827;
+}
+
+.dot-sep,
+.logement-city {
+  color: #64748b;
+}
+
+.detail-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #64748b;
+  font-size: 0.82rem;
+}
+
+.icon-muted {
+  color: #64748b;
+}
+
+.desc-line {
+  margin: 0;
+  min-height: 34px;
+  color: #475569;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.equipements-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.equip-chip {
+  font-size: 0.7rem;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.card-footer {
+  border-top: 1px solid #eef2f7;
+  padding-top: 9px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-value {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.price-block small {
+  color: #64748b;
+  font-size: 0.68rem;
+}
+
+.rating-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  color: #0f172a;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.star-icon {
+  color: #0f172a;
+  fill: #0f172a;
+}
+
+.rating-chip small {
+  color: #64748b;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 12px;
+    gap: 14px;
+  }
+
+  .page-header {
+    padding: 12px;
+    border-radius: 12px;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.84rem;
+    margin-top: 4px;
+  }
+
+  .section-block {
+    gap: 10px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .section-hint {
+    font-size: 0.76rem;
+  }
+
+  .cards-strip {
+    gap: 12px;
+  }
+
+  .logement-card {
+    width: min(260px, 72vw);
+    min-width: min(260px, 72vw);
+    border-radius: 12px;
+  }
+
+  .logement-image-wrap {
+    height: 150px;
+  }
+
+  .overlay-top {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .places-chip {
+    font-size: 0.64rem;
+    padding: 3px 7px;
+  }
+
+  .logement-card-body {
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .logement-meta {
+    font-size: 0.8rem;
+  }
+
+  .detail-line {
+    font-size: 0.76rem;
+  }
+
+  .desc-line {
+    font-size: 0.76rem;
+    min-height: 30px;
+  }
+
+  .equip-chip {
+    font-size: 0.64rem;
+    padding: 2px 7px;
+  }
+
+  .price-value {
+    font-size: 0.9rem;
+  }
+
+  .rating-chip {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+  }
+
+  .empty-state {
+    min-height: 150px;
+    border-radius: 12px;
+  }
+
+  .empty-title {
+    font-size: 0.95rem;
+  }
+
+  .empty-subtitle {
+    font-size: 0.8rem;
+  }
 }
 </style>

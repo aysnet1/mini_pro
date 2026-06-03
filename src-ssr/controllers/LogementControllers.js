@@ -124,6 +124,11 @@ export const GetAllLogements = async (req, res) => {
     const { budget_max, budget_min, type, localisation, ville, universite, all_villes, statut, minLat, maxLat, minLng, maxLng } = req.query;
     const showAllVilles = ['1', 'true', 'yes', 'oui'].includes(String(all_villes || '').toLowerCase());
 
+    if (req.user?.role !== 'admin') {
+      query += " AND statut = ?";
+      queryParams.push('disponible');
+    }
+
     if (req.user?.role === 'etudiant') {
       const [students] = await db.query(
         `SELECT recherche_ville, universite
@@ -251,6 +256,7 @@ export const GetHomeFeed = async (req, res) => {
          FROM avis
          GROUP BY logement_id
        ) r ON r.logement_id = l.id
+       WHERE l.statut = 'disponible'
        ORDER BY l.id DESC`
     );
 
@@ -424,6 +430,46 @@ export const DeleteLogement = async (req, res) => {
     res.status(200).json({ message: "Logement supprimé avec succès." });
   } catch (err) {
     res.status(500).json({ error: "Erreur de suppression.", details: err.message });
+  }
+};
+
+/**
+ * Mettre à jour le statut d'un logement (admin)
+ * @route PATCH /api/logements/:id/status
+ */
+export const SetLogementStatusByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const requestedStatus = `${req.body?.statut || ''}`.trim().toLowerCase();
+    const allowedStatuses = ['disponible', 'indisponible', 'desactive'];
+
+    if (!allowedStatuses.includes(requestedStatus)) {
+      return res.status(400).json({ error: "Statut invalide." });
+    }
+
+    const [existing] = await db.query(
+      "SELECT id, statut FROM logement WHERE id = ?",
+      [id]
+    );
+
+    if (existing.length === 0) {
+      return res.status(404).json({ error: "Logement non trouvé." });
+    }
+
+    await db.query(
+      "UPDATE logement SET statut = ? WHERE id = ?",
+      [requestedStatus, id]
+    );
+
+    res.status(200).json({
+      message: "Statut du logement mis à jour.",
+      logement: {
+        id: Number(id),
+        statut: requestedStatus
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur de mise à jour du statut.", details: err.message });
   }
 };
 
