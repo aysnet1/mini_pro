@@ -138,85 +138,31 @@
       <q-card flat class="search-card" v-if="user && user.role === 'proprietaire'">
         <q-card-section class="search-section">
           <div class="search-row">
-            <q-input
-              v-model="searchQuery"
-              outlined
-              dense
-              placeholder="Rechercher par adresse, ville ou description..."
-              color="black"
-              class="search-input"
-              clearable
-              @update:model-value="onSearchChange"
-            >
+            <q-input v-model="searchQuery" outlined dense placeholder="Rechercher par adresse, ville ou description..."
+              color="black" class="search-input" clearable @update:model-value="onSearchChange">
               <template v-slot:prepend>
                 <q-icon name="search" color="black" />
               </template>
             </q-input>
 
-            <q-btn
-              v-if="hasActiveFilters"
-              flat
-              no-caps
-              color="black"
-              icon="filter_alt_off"
-              label="Réinitialiser"
-              @click="resetFilters"
-              class="btn-reset-filters"
-            />
+            <q-btn v-if="hasActiveFilters" flat no-caps color="black" icon="filter_alt_off" label="Réinitialiser"
+              @click="resetFilters" class="btn-reset-filters" />
           </div>
 
           <div class="filters-row">
-            <q-select
-              v-model="filterType"
-              :options="typeFilterOptionsWithAll"
-              outlined
-              dense
-              placeholder="Type"
-              color="black"
-              emit-value
-              map-options
-              clearable
-              class="filter-select filter-dense"
-              @update:model-value="onFilterChange"
-            />
+            <q-select v-model="filterType" :options="typeFilterOptionsWithAll" outlined dense placeholder="Type"
+              color="black" emit-value map-options clearable class="filter-select filter-dense"
+              @update:model-value="onFilterChange" />
 
-            <q-select
-              v-model="filterStatut"
-              :options="statutFilterOptionsWithAll"
-              outlined
-              dense
-              placeholder="Statut"
-              color="black"
-              emit-value
-              map-options
-              clearable
-              class="filter-select filter-dense"
-              @update:model-value="onFilterChange"
-            />
+            <q-select v-model="filterStatut" :options="statutFilterOptionsWithAll" outlined dense placeholder="Statut"
+              color="black" emit-value map-options clearable class="filter-select filter-dense"
+              @update:model-value="onFilterChange" />
 
-            <q-input
-              v-model.number="filterPrixMin"
-              type="number"
-              outlined
-              dense
-              placeholder="Prix min"
-              color="black"
-              class="filter-input filter-dense"
-              clearable
-              @update:model-value="onFilterChange"
-            />
+            <q-input v-model.number="filterPrixMin" type="number" outlined dense placeholder="Prix min" color="black"
+              class="filter-input filter-dense" clearable @update:model-value="onFilterChange" />
 
-            <q-input
-              v-model.number="filterPrixMax"
-              type="number"
-              outlined
-              dense
-              placeholder="Prix max"
-              color="black"
-              class="filter-input filter-dense"
-              clearable
-              @update:model-value="onFilterChange"
-            />
+            <q-input v-model.number="filterPrixMax" type="number" outlined dense placeholder="Prix max" color="black"
+              class="filter-input filter-dense" clearable @update:model-value="onFilterChange" />
           </div>
         </q-card-section>
       </q-card>
@@ -242,82 +188,73 @@
           <div class="logements-grid">
             <div v-for="item in ownerLogements" :key="item.id" class="card-wrapper">
               <router-link :to="`/logements/${item.id}`" class="card-link">
-              <q-card flat class="logement-card">
-                <div class="logement-photos">
-                  <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
-                    navigation arrows navigation-icon="circle" control-color="white" height="200px"
-                    class="logement-carousel">
-                    <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx"
-                      class="carousel-slide">
-                      <img :src="photo" class="carousel-img" />
-                      <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
-                        @click.stop="deletePhoto(item.id, photo)">
-                        <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
-                      </q-btn>
-                    </q-carousel-slide>
-                  </q-carousel>
+                <q-card flat class="logement-card">
+                  <div class="logement-photos">
+                    <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
+                      navigation arrows navigation-icon="circle" control-color="white" height="200px"
+                      class="logement-carousel">
+                      <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx"
+                        class="carousel-slide">
+                        <img :src="photo" class="carousel-img" />
+                        <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
+                          @click.stop="deletePhoto(item.id, photo)">
+                          <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
+                        </q-btn>
+                      </q-carousel-slide>
+                    </q-carousel>
 
-                  <div v-else class="no-photo-placeholder">
-                    <q-icon name="image" size="48px" color="grey-5" />
-                    <span>Aucune photo</span>
+                    <div v-else class="no-photo-placeholder">
+                      <q-icon name="image" size="48px" color="grey-5" />
+                      <span>Aucune photo</span>
+                    </div>
+
+                    <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
+                      size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
+                      <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
+                        restantes)</q-tooltip>
+                    </q-btn>
                   </div>
 
-                  <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
-                    size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
-                    <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
-                      restantes)</q-tooltip>
-                  </q-btn>
-                </div>
+                  <q-card-section class="logement-card-body">
+                    <div class="logement-meta">
+                      <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
+                        :label="item.statut || 'disponible'" />
+                      <span class="logement-type-badge">{{ item.type }}</span>
+                    </div>
+                    <h3 class="logement-title">{{ item.adress }}</h3>
+                    <div class="logement-details">
+                      <div class="detail-item">
+                        <q-icon name="location_city" size="16px" />
+                        <span>{{ item.ville }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <q-icon name="payments" size="16px" />
+                        <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
+                      </div>
+                      <div v-if="item.nb_places" class="detail-item">
+                        <q-icon name="group" size="16px" />
+                        <span>{{ item.nb_places }} place(s)</span>
+                      </div>
+                    </div>
+                  </q-card-section>
+                </q-card>
+              </router-link>
 
-                <q-card-section class="logement-card-body">
-                  <div class="logement-meta">
-                    <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
-                      :label="item.statut || 'disponible'" />
-                    <span class="logement-type-badge">{{ item.type }}</span>
-                  </div>
-                  <h3 class="logement-title">{{ item.adress }}</h3>
-                  <div class="logement-details">
-                    <div class="detail-item">
-                      <q-icon name="location_city" size="16px" />
-                      <span>{{ item.ville }}</span>
-                    </div>
-                    <div class="detail-item">
-                      <q-icon name="payments" size="16px" />
-                      <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
-                    </div>
-                    <div v-if="item.nb_places" class="detail-item">
-                      <q-icon name="group" size="16px" />
-                      <span>{{ item.nb_places }} place(s)</span>
-                    </div>
-                  </div>
-                </q-card-section>
-              </q-card>
-            </router-link>
-
-            <div class="card-actions">
-              <q-btn round flat size="sm" icon="edit" color="black" @click="openEditDialog(item)">
-                <q-tooltip>Modifier le logement</q-tooltip>
-              </q-btn>
-              <q-btn round flat size="sm" icon="delete" color="red" @click="confirmDelete(item)">
-                <q-tooltip>Supprimer le logement</q-tooltip>
-              </q-btn>
+              <div class="card-actions">
+                <q-btn round flat size="sm" icon="edit" color="black" @click="openEditDialog(item)">
+                  <q-tooltip>Modifier le logement</q-tooltip>
+                </q-btn>
+                <q-btn round flat size="sm" icon="delete" color="red" @click="confirmDelete(item)">
+                  <q-tooltip>Supprimer le logement</q-tooltip>
+                </q-btn>
+              </div>
             </div>
-          </div>
           </div>
 
           <!-- Load More Button -->
           <div v-if="hasMoreLogements" class="load-more-container">
-            <q-btn
-              no-caps
-              unelevated
-              color="black"
-              text-color="white"
-              icon="refresh"
-              label="Charger plus de logements"
-              :loading="loadingMore"
-              @click="loadMoreLogements"
-              class="btn-load-more"
-            />
+            <q-btn no-caps unelevated color="black" text-color="white" icon="refresh" label="Charger plus de logements"
+              :loading="loadingMore" @click="loadMoreLogements" class="btn-load-more" />
             <p class="pagination-info">
               {{ ownerLogements.length }} sur {{ pagination.total }} logement(s)
             </p>
@@ -1222,11 +1159,11 @@ onMounted(async () => {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .filters-row {
     flex-direction: column;
   }
-  
+
   .filter-select,
   .filter-input {
     max-width: 100%;

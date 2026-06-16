@@ -4,3 +4,4 @@
  */
 
 export { logementService, normalizeLogement, fetchLogementsApi } from './logement.service.js'
+export * from './chat.service.js'

@@ -1,5 +1,5 @@
 import { defineStore, acceptHMRUpdate } from 'pinia'
-import { useAuthStore } from './auth'
+import * as chatService from '@/services/chat.service'
 
 function makeKey(userId, agentId) {
   return `${userId}:${agentId}`
@@ -47,6 +47,7 @@ function toUiMessage(row, userId, index) {
     toolStatus: null,
     toolLoading: false,
     widgetData: parsedWidgetData,
+    mapData: null,
   }
 }
 
@@ -73,14 +74,6 @@ export const useChatStore = defineStore('chat', {
   },
 
   actions: {
-    getAuthHeaders() {
-      const authStore = useAuthStore()
-      return {
-        'Content-Type': 'application/json',
-        ...authStore.authHeader,
-      }
-    },
-
     setConversation(userId, agentId, messages) {
       const key = makeKey(userId, agentId)
       this.conversations[key] = Array.isArray(messages) ? messages : []
@@ -106,6 +99,7 @@ export const useChatStore = defineStore('chat', {
     async loadConversation(userId, agentId) {
       const numericUserId = Number(userId)
       const numericAgentId = Number(agentId)
+
       if (!Number.isFinite(numericUserId) || !Number.isFinite(numericAgentId)) {
         this.setConversation(userId, agentId, [])
         return []
@@ -115,82 +109,47 @@ export const useChatStore = defineStore('chat', {
       this.loadingByKey[key] = true
 
       try {
-        const response = await fetch(
-          `/api/messages/conversation/${numericUserId}/${numericAgentId}`,
-          { headers: this.getAuthHeaders() }
-        )
-
-        if (!response.ok) {
-          const payload = await response.json().catch(() => ({}))
-          throw new Error(payload?.error || 'Erreur de chargement des messages')
-        }
-
-        const rows = await response.json()
+        const rows = await chatService.getConversation(numericUserId, numericAgentId)
         const mapped = Array.isArray(rows)
           ? rows.map((row, index) => toUiMessage(row, numericUserId, index))
           : []
         this.conversations[key] = mapped
         return mapped
+      } catch (error) {
+        console.error('[chatStore] loadConversation error:', error)
+        this.conversations[key] = []
+        return []
       } finally {
         this.loadingByKey[key] = false
       }
     },
 
-    async saveMessageToApi({ expediteurId, destinataireId, contenu, role = 'user' }) {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          expediteur_id: Number(expediteurId),
-          destinataire_id: Number(destinataireId),
-          role,
+    async saveMessage({ expediteurId, destinataireId, contenu, role = 'user' }) {
+      try {
+        return await chatService.createMessage({
+          expediteurId,
+          destinataireId,
           contenu,
-        }),
-      })
-
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}))
-        throw new Error(payload?.error || "Erreur lors de l'envoi du message")
+          role,
+        })
+      } catch (error) {
+        console.error('[chatStore] saveMessage error:', error)
+        throw error
       }
-
-      return response.json().catch(() => ({}))
     },
 
-    async saveWidgetDataToApi({ agentId, userId, data, role = 'tools' }) {
-      const payload = Array.isArray(data) ? data : []
-      const primaryResponse = await fetch('/api/messages', {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          expediteur_id: Number(agentId),
-          destinataire_id: Number(userId),
+    async saveWidgetData({ agentId, userId, data, role = 'tools' }) {
+      try {
+        return await chatService.createWidgetData({
+          agentId,
+          userId,
+          data,
           role,
-          contenu: JSON.stringify(payload),
-        }),
-      })
-
-      if (primaryResponse.ok) {
-        return primaryResponse.json().catch(() => ({}))
+        })
+      } catch (error) {
+        console.error('[chatStore] saveWidgetData error:', error)
+        throw error
       }
-
-      // Fallback for environments where DB enum does not yet include `tools`.
-      const fallbackResponse = await fetch('/api/messages', {
-        method: 'POST',
-        headers: this.getAuthHeaders(),
-        body: JSON.stringify({
-          expediteur_id: Number(agentId),
-          destinataire_id: Number(userId),
-          role: 'model',
-          contenu: JSON.stringify({ kind: 'tools_results', data: payload }),
-        }),
-      })
-
-      if (!fallbackResponse.ok) {
-        const payloadError = await fallbackResponse.json().catch(() => ({}))
-        throw new Error(payloadError?.error || "Erreur lors de la sauvegarde des widgets")
-      }
-
-      return fallbackResponse.json().catch(() => ({}))
     },
 
     setSending(userId, agentId, value) {
@@ -209,20 +168,9 @@ export const useChatStore = defineStore('chat', {
       // Call API to delete messages if user and agent IDs are valid
       if (Number.isFinite(numericUserId) && Number.isFinite(numericAgentId)) {
         try {
-          const response = await fetch(
-            `/api/messages/conversation/${numericUserId}/${numericAgentId}`,
-            {
-              method: 'DELETE',
-              headers: this.getAuthHeaders(),
-            }
-          )
-
-          if (!response.ok) {
-            const payload = await response.json().catch(() => ({}))
-            console.error('[chat] clear conversation failed:', payload?.error)
-          }
-        } catch (err) {
-          console.error('[chat] clear conversation error:', err)
+          await chatService.deleteConversation(numericUserId, numericAgentId)
+        } catch (error) {
+          console.error('[chatStore] clearConversation error:', error)
         }
       }
     },

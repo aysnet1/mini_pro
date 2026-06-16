@@ -57,7 +57,7 @@ export const useLogementsStore = defineStore('logements', {
         })
         const data = await response.json()
         if (!response.ok) throw new Error(data.error || 'Erreur de récupération.')
-        
+
         if (append) {
           // Append new items to existing list
           this.items = [...this.items, ...(data.logements || [])]
@@ -65,13 +65,13 @@ export const useLogementsStore = defineStore('logements', {
           // Replace all items (first page or refresh)
           this.items = Array.isArray(data.logements) ? data.logements : []
         }
-        
+
         // Update pagination and filters info
         this.pagination = data.pagination || this.pagination
         if (data.filters) {
           this.filters = { ...this.filters, ...data.filters }
         }
-        
+
         return this.items
       } finally {
         this.loading = false
@@ -80,7 +80,7 @@ export const useLogementsStore = defineStore('logements', {
 
     async fetchMore() {
       if (!this.pagination.hasMore || this.loading) return
-      
+
       const nextPage = this.pagination.page + 1
       await this.fetchMine(nextPage, true)
     },

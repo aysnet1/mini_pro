@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { logementService } from '@/services/logement.service'
 import { buildQuery } from '@/utils/buildQuery'
 
@@ -13,7 +13,7 @@ export const useLogementStore = defineStore('logement', () => {
   const error = ref(null)
   const logements = ref([])
   const searchContext = ref({ filtreVille: null, universite: null, message: '' })
-  
+
   // Filters state
   const filters = ref({
     q: '',
@@ -25,7 +25,7 @@ export const useLogementStore = defineStore('logement', () => {
     universite: '',
     adress: ''
   })
-  
+
   // Pagination state
   const pagination = ref({
     page: 1,
@@ -56,27 +56,31 @@ export const useLogementStore = defineStore('logement', () => {
     return !loading.value && !error.value && logements.value.length === 0
   })
 
-  const visiblePages = computed(() => {
-    const current = pagination.value.page
-    const total = pagination.value.totalPages
-    const delta = 2
+  // visiblePages as a ref that we update when pagination changes
+  const visiblePages = ref([])
 
-    const range = []
-    for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-      range.push(i)
-    }
+  // Watch pagination and update visiblePages
+  watch(
+    () => ({ page: pagination.value.page, totalPages: pagination.value.totalPages }),
+    ({ page, totalPages }) => {
+      if (totalPages <= 1) {
+        visiblePages.value = []
+        return
+      }
 
-    if (current - delta > 2) {
-      range.unshift(1)
-    }
+      const delta = 2
+      const range = []
 
-    if (current + delta < total - 1) {
-      range.push(total)
-    }
+      // Calculate range of pages to show around current page
+      for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
+        range.push(i)
+      }
 
-    range.sort((a, b) => a - b)
-    return [...new Set(range)]
-  })
+      range.sort((a, b) => a - b)
+      visiblePages.value = [...new Set(range)]
+    },
+    { immediate: true }
+  )
 
   // Actions
   function resetFilters() {
@@ -102,7 +106,13 @@ export const useLogementStore = defineStore('logement', () => {
 
   function updatePagination(newPagination) {
     if (newPagination) {
-      pagination.value = { ...pagination.value, ...newPagination }
+      // Update individual properties to maintain reactivity
+      pagination.value.page = newPagination.page ?? pagination.value.page
+      pagination.value.limit = newPagination.limit ?? pagination.value.limit
+      pagination.value.total = newPagination.total ?? pagination.value.total
+      pagination.value.totalPages = newPagination.totalPages ?? pagination.value.totalPages
+      pagination.value.hasNext = newPagination.hasNext ?? pagination.value.hasNext
+      pagination.value.hasPrev = newPagination.hasPrev ?? pagination.value.hasPrev
     }
   }
 
@@ -117,7 +127,7 @@ export const useLogementStore = defineStore('logement', () => {
   async function fetchLogements() {
     loading.value = true
     error.value = null
-    
+
     try {
       const params = buildQuery(filters.value, pagination.value)
       const result = await logementService.fetchLogementsApi(params)
@@ -127,16 +137,16 @@ export const useLogementStore = defineStore('logement', () => {
         updatePagination(result.pagination)
       }
       searchContext.value = result.contexte
-      
+
       return result
     } catch (err) {
       console.error('Error fetching logements:', err)
       setError(err.message || 'Erreur lors de la recherche des logements')
       logements.value = []
-      searchContext.value = { 
-        filtreVille: null, 
-        universite: null, 
-        message: 'Impossible de charger les logements.' 
+      searchContext.value = {
+        filtreVille: null,
+        universite: null,
+        message: 'Impossible de charger les logements.'
       }
       throw err
     } finally {
@@ -155,11 +165,10 @@ export const useLogementStore = defineStore('logement', () => {
     if (page < 1 || page > pagination.value.totalPages) {
       return
     }
-    
+
     pagination.value.page = page
     return await fetchLogements()
   }
-
   async function applyFilters(newFilters, resetPage = true) {
     updateFilters(newFilters)
     return await search(resetPage)
@@ -184,13 +193,13 @@ export const useLogementStore = defineStore('logement', () => {
     searchContext,
     filters,
     pagination,
-    
+
     // Getters
     hasActiveFilters,
     hasResults,
     isEmptyState,
     visiblePages,
-    
+
     // Actions
     resetFilters,
     resetPagination,

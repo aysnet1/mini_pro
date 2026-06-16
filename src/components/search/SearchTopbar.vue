@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   filters: {
@@ -78,16 +78,30 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['update:filters', 'search', 'reset', 'open-filters', 'update:activeTab'])
+const emit = defineEmits(['update:filters', 'search', 'reset', 'open-filters', 'update:active-tab'])
 
-const localFilters = computed({
-  get: () => props.filters,
-  set: (value) => emit('update:filters', value)
+// Local state for filters - deep copy to avoid mutating props
+const localFilters = ref({ ...props.filters })
+
+// Watch for prop changes and update local state
+watch(() => props.filters, (newFilters) => {
+  localFilters.value = { ...newFilters }
+}, { deep: true })
+
+// Watch for local changes and emit updates
+watch(localFilters, (newFilters) => {
+  emit('update:filters', { ...newFilters })
+}, { deep: true })
+
+// Local state for active tab
+const localActiveTab = ref(props.activeTab)
+
+watch(() => props.activeTab, (newTab) => {
+  localActiveTab.value = newTab
 })
 
-const localActiveTab = computed({
-  get: () => props.activeTab,
-  set: (value) => emit('update:activeTab', value)
+watch(localActiveTab, (newTab) => {
+  emit('update:active-tab', newTab)
 })
 
 // Local filtered options for ville dropdown
@@ -95,6 +109,7 @@ const filteredVilleOptions = ref(props.villeOptions)
 
 function clearQuery() {
   localFilters.value.q = ''
+  emit('update:filters', { ...localFilters.value })
   emit('search')
 }
 

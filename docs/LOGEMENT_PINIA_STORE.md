@@ -7,6 +7,7 @@ The `useLogementStore` Pinia store centralizes all logement search state managem
 ## Migration from Composables
 
 ### Before (Composables)
+
 ```vue
 <script setup>
 import { useLogementFilters } from '@/composables/useLogementFilters'
@@ -20,6 +21,7 @@ const { loading, logements, fetchLogements } = useLogementSearch(filters, pagina
 ```
 
 ### After (Pinia Store)
+
 ```vue
 <script setup>
 import { storeToRefs } from 'pinia'
@@ -28,14 +30,8 @@ import { useLogementStore } from '@/stores/logement'
 const logementStore = useLogementStore()
 
 // Destructure state (reactive with storeToRefs)
-const { 
-  loading, 
-  logements, 
-  filters, 
-  pagination, 
-  hasActiveFilters,
-  visiblePages
-} = storeToRefs(logementStore)
+const { loading, logements, filters, pagination, hasActiveFilters, visiblePages } =
+  storeToRefs(logementStore)
 
 // Destructure actions
 const { fetchLogements, search, changePage, applyFilters, resetAll } = logementStore
@@ -53,7 +49,7 @@ const { fetchLogements, search, changePage, applyFilters, resetAll } = logementS
   error: string | null,
   logements: Array,
   searchContext: { filtreVille, universite, message },
-  
+
   // Filters
   filters: {
     q: string,
@@ -65,7 +61,7 @@ const { fetchLogements, search, changePage, applyFilters, resetAll } = logementS
     universite: string,
     adress: string
   },
-  
+
   // Pagination
   pagination: {
     page: number,
@@ -88,22 +84,26 @@ const { fetchLogements, search, changePage, applyFilters, resetAll } = logementS
 ### Actions
 
 #### Filter Management
+
 - `resetFilters()` - Reset all filters to default
 - `updateFilters(newFilters)` - Partial update of filters
 - `setFilter(key, value)` - Set a single filter value
 - `applyFilters(newFilters, resetPage)` - Apply filters and optionally reset page
 
 #### Pagination
+
 - `resetPagination()` - Reset to page 1
 - `updatePagination(newPagination)` - Update pagination state from API
 - `changePage(page)` - Change page and fetch results
 
 #### Search
+
 - `fetchLogements()` - Fetch results with current filters/pagination
 - `search(resetPage)` - Search with optional page reset
 - `resetAll()` - Reset everything and fetch
 
 #### Error Handling
+
 - `clearError()` - Clear error state
 - `setError(message)` - Set error message
 
@@ -144,7 +144,7 @@ function onPageChange(page) {
       <div v-for="logement in logements" :key="logement.id">
         {{ logement.type }} - {{ logement.ville }}
       </div>
-      
+
       <PaginationBar
         :page="pagination.page"
         :total-pages="pagination.totalPages"
@@ -191,7 +191,7 @@ watch(
     console.log('Filters changed:', newFilters)
     store.search(true)
   },
-  { deep: true }
+  { deep: true },
 )
 
 // Watch pagination
@@ -199,7 +199,7 @@ watch(
   () => pagination.value.page,
   (newPage) => {
     console.log('Page changed to:', newPage)
-  }
+  },
 )
 </script>
 ```
@@ -207,26 +207,31 @@ watch(
 ## Benefits
 
 ### ✅ Centralized State
+
 - Single source of truth for all logement search state
 - Easy to share state across components
 - Predictable state management
 
 ### ✅ DevTools Integration
+
 - Time-travel debugging
 - State inspection
 - Action tracking
 
 ### ✅ Reactivity
+
 - Full reactivity with `storeToRefs`
 - Automatic updates across components
 - Computed properties (getters)
 
 ### ✅ Testability
+
 - Easy to mock store in tests
 - Isolated business logic
 - Predictable actions
 
 ### ✅ TypeScript Ready
+
 - Full type inference support
 - Type-safe actions and state
 

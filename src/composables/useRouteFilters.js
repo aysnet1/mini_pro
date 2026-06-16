@@ -32,26 +32,16 @@ export function useRouteFilters(filters, pagination) {
       pagination.value.page = 1
     }
 
-    const query = {}
-    if (filters.value.q) query.q = filters.value.q
-    if (filters.value.ville) query.ville = filters.value.ville
-    if (filters.value.types?.length) query.types = filters.value.types.join(',')
-    if (filters.value.budget_min) query.budget_min = String(filters.value.budget_min)
-    if (filters.value.budget_max) query.budget_max = String(filters.value.budget_max)
-    if (filters.value.nb_places_min) query.nb_places_min = String(filters.value.nb_places_min)
-    if (filters.value.universite) query.universite = filters.value.universite
-    if (filters.value.adress) query.adress = filters.value.adress
-
-    // Only add page param if not on page 1
-    const currentPage = resetPage ? 1 : pagination.value.page
-    if (currentPage > 1) query.page = String(currentPage)
+    // Use buildQuery utility to build params
+    const params = buildQuery(filters.value, resetPage ? { page: 1, limit: pagination.value.limit } : pagination.value)
+    const query = Object.fromEntries(params.entries())
 
     router.replace({ query })
   }
 
   function navigateToPage(page) {
-    const query = { ...route.query, page: String(page) }
-    if (page === 1) delete query.page // Remove page param if it's page 1
+    const params = buildQuery(filters.value, { page, limit: pagination.value.limit })
+    const query = Object.fromEntries(params.entries())
     router.push({ query })
   }
 

@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
     show: {
@@ -95,23 +95,32 @@ const props = defineProps({
 
 const emit = defineEmits(['update:show', 'update:filters', 'apply', 'reset', 'filter-ville'])
 
-const localShow = computed({
-    get: () => props.show,
-    set: (value) => emit('update:show', value)
+// Local state for show dialog
+const localShow = ref(props.show)
+
+watch(() => props.show, (newShow) => {
+    localShow.value = newShow
 })
 
-const localFilters = computed({
-    get: () => props.filters,
-    set: (value) => emit('update:filters', value)
+watch(localShow, (newShow) => {
+    emit('update:show', newShow)
 })
+
+// Local state for filters - deep copy to avoid mutating props
+const localFilters = ref({ ...props.filters })
+
+// Watch for prop changes and update local state
+watch(() => props.filters, (newFilters) => {
+    localFilters.value = { ...newFilters }
+}, { deep: true })
+
+// Watch for local changes and emit updates
+watch(localFilters, (newFilters) => {
+    emit('update:filters', { ...newFilters })
+}, { deep: true })
 
 function filterVille(val, update) {
-    update(() => {
-        const needle = (val || '').trim().toLowerCase()
-        props.villeOptions = needle
-            ? props.villeOptions.filter(o => o.label.toLowerCase().includes(needle))
-            : props.villeOptions
-    })
+    // Delegate to parent component for filtering
     emit('filter-ville', val, update)
 }
 </script>

@@ -7,7 +7,7 @@ const routes = [
     component: () => import('layouts/AppLayout.vue'),
     children: [
       { path: '', component: () => import('pages/IndexPage.vue'), meta: { requiresAuth: false } },
-      { path: 'recherche', component: () => import('pages/logement/SearchPage.vue'), meta: { requiresAuth: false } },
+      { path: 'recherche', component: () => import('pages/logement/RecherchePage.vue'), meta: { requiresAuth: false } },
       { path: 'logements/:id', component: () => import('pages/logement/LogementDetailPage.vue'), meta: { requiresAuth: false } },
       { path: 'profile', component: () => import('pages/etudiants/IndexPage.vue') },
       { path: 'candidatures', component: () => import('pages/etudiants/MesReservationsPage.vue') },

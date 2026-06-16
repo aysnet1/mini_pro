@@ -185,7 +185,7 @@ import {
   ClipboardList, Home,
   LayoutDashboard, Bot, CircleUserRound, LogIn
 } from 'lucide-vue-next'
-import ChatStickyWidget from '@/components/chat/ChatStickyWidget.vue'
+import ChatStickyWidget from '@/components/chat/ChatWidget.vue'
 
 const $q = useQuasar()
 const router = useRouter()
