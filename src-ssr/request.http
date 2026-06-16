@@ -28,7 +28,7 @@ Content-Type: {{json}}
 {
   "nom": "Ben Salah",
   "prenom": "Amine",
-  "email": "owner.test@takelog.local",
+  "email": "aysser221@gmail.com",
   "password": "123456",
   "role": "proprietaire",
   "tel": "22111222",
@@ -43,9 +43,9 @@ POST {{baseUrl}}/api/users/register
 Content-Type: {{json}}
 
 {
-  "nom": "Trabelsi",
+  "nom": "Trabelsi11",
   "prenom": "Yassine",
-  "email": "student.test@takelog.local",
+  "email": "aysser21@gmail.com",
   "password": "123456",
   "role": "etudiant",
   "tel": "55123456",
@@ -77,7 +77,7 @@ POST {{baseUrl}}/api/users/signin
 Content-Type: {{json}}
 
 {
-  "email": "owner.test@takelog.local",
+  "email": "aysser221@gmail.com",
   "mot_de_passe": "123456"
 }
 
@@ -153,8 +153,8 @@ Content-Type: {{json}}
 Authorization: Bearer {{login_owner.response.body.$.token}}
 
 {
-  "adress": "Rue de Marseille, Tunis",
-  "ville": "Tunis",
+  "adress": "cte okba",
+  "ville": "Kairouan",
   "latitude": 36.8065,
   "longitude": 10.1815,
   "type": "appartement",

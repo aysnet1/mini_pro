@@ -8,9 +8,9 @@
         </q-btn>
 
         <q-toolbar-title class="text-weight-bolder tracking-tight text-dark flex items-center gap-sm">
-          <div class="logo-accent-box flex items-center justify-center">
-            <Building2 :size="18" :stroke-width="2.5" class="text-dark" />
-          </div>
+          <q-avatar class="">
+            <q-img src="/app.png" alt="Logo" class="" />
+          </q-avatar>
           <span class="text-subtitle1 text-weight-bolder text-dark">TakeLog</span>
         </q-toolbar-title>
 
@@ -44,7 +44,9 @@
                 </div>
               </q-item>
 
-              <q-item clickable v-close-popup to="/profile" class="rounded-borders q-mt-sm nav-dropdown-item">
+              <q-item clickable v-close-popup
+                :to="user?.role === 'etudiant' ? '/profile' : user?.role === 'proprietaire' ? '/proprietaire/profile' : '/admin/profile'"
+                class="rounded-borders q-mt-sm nav-dropdown-item">
                 <q-item-section avatar min-width="24px">
                   <User :size="16" :stroke-width="2" />
                 </q-item-section>
@@ -69,9 +71,9 @@
         class="bg-dark text-white column justify-between main-sidebar">
         <div class="q-pa-lg column gap-xl">
           <div class="row items-center gap-md q-px-xs">
-            <div class="logo-accent-box-dark flex items-center justify-center">
-              <Building2 :size="20" :stroke-width="2.5" class="text-white" />
-            </div>
+            <q-avatar class="logo-accent-box-dark flex items-center justify-center">
+              <q-img src="/app.png" alt="Logo" class="" />
+            </q-avatar>
             <span class="text-h6 text-weight-bolder tracking-wider text-white">TakeLog</span>
           </div>
 
@@ -84,13 +86,14 @@
 
 
             <template v-if="user?.role === 'etudiant'">
-              <q-item clickable to="/home" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
+              <q-item clickable to="/" exact-active-class="sidebar-item-active"
+                class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <LayoutDashboard :size="18" :stroke-width="2" />
                 </q-item-section>
                 <q-item-section class="text-weight-medium text-body2">Accueil</q-item-section>
               </q-item>
-              <q-item clickable to="/recherche" active-class="sidebar-item-active"
+              <q-item clickable to="/recherche" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <Search :size="18" :stroke-width="2" />
@@ -98,7 +101,7 @@
                 <q-item-section class="text-weight-medium text-body2">Explorer</q-item-section>
               </q-item>
 
-              <q-item clickable to="/candidatures" active-class="sidebar-item-active"
+              <q-item clickable to="/candidatures" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <ClipboardList :size="18" :stroke-width="2" />
@@ -108,7 +111,7 @@
             </template>
 
             <template v-else-if="user?.role === 'proprietaire'">
-              <q-item clickable to="/mes-logements" active-class="sidebar-item-active"
+              <q-item clickable to="/proprietaire/mes-logements" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <Home :size="18" :stroke-width="2" />
@@ -116,7 +119,7 @@
                 <q-item-section class="text-weight-medium text-body2">Mes Annonces</q-item-section>
               </q-item>
 
-              <q-item clickable to="/reservations" active-class="sidebar-item-active"
+              <q-item clickable to="/proprietaire/reservations" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <CalendarDays :size="18" :stroke-width="2" />
@@ -126,7 +129,7 @@
             </template>
 
             <template v-else-if="user?.role === 'admin'">
-              <q-item clickable to="/admin/home" active-class="sidebar-item-active"
+              <q-item clickable to="/admin/home" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <LayoutDashboard :size="18" :stroke-width="2" />
@@ -134,7 +137,7 @@
                 <q-item-section class="text-weight-medium text-body2">Accueil</q-item-section>
               </q-item>
 
-              <q-item clickable to="/admin/users" active-class="sidebar-item-active"
+              <q-item clickable to="/admin/users" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <User :size="18" :stroke-width="2" />
@@ -142,7 +145,7 @@
                 <q-item-section class="text-weight-medium text-body2">Gestion Utilisateurs</q-item-section>
               </q-item>
 
-              <q-item clickable to="/admin/logements" active-class="sidebar-item-active"
+              <q-item clickable to="/admin/logements" exact-active-class="sidebar-item-active"
                 class="sidebar-nav-item rounded-borders">
                 <q-item-section avatar class="item-icon-section">
                   <Home :size="18" :stroke-width="2" />
@@ -153,7 +156,9 @@
 
 
 
-            <q-item clickable to="/profile" active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
+            <q-item clickable
+              :to="user?.role === 'etudiant' ? '/profile' : user?.role === 'proprietaire' ? '/proprietaire/profile' : '/admin/profile'"
+              exact-active-class="sidebar-item-active" class="sidebar-nav-item rounded-borders">
               <q-item-section avatar class="item-icon-section">
                 <User :size="18" :stroke-width="2" />
               </q-item-section>
@@ -204,9 +209,9 @@ import { useQuasar } from 'quasar'
 
 // High fidelity modern design language vector system from Lucide
 import {
-  Menu, Building2, User, LogOut, Search,
+  Menu, User, LogOut, Search,
   ClipboardList, Home, CalendarDays,
-   LayoutDashboard
+  LayoutDashboard
 } from 'lucide-vue-next'
 import ChatStickyWidget from '@/components/chat/ChatStickyWidget.vue'
 

@@ -110,19 +110,28 @@ async function handleLogin() {
       timeout: 3000
     })
 
+    // Redirect based on user role
     if (authStore.user?.role === 'admin') {
       router.push('/admin/home')
+    } else if (authStore.user?.role === 'proprietaire') {
+      router.push('/proprietaire/mes-logements')
     } else {
       router.push('/')
     }
   } catch (err) {
     errorMessage.value = err.message || 'Identifiants incorrects'
+
+    // Check if it's a disabled account error
+    const isDisabledError = err.message.includes('désactivé') || err.message.includes('désactivé')
+
     $q.notify({
       message: errorMessage.value,
-      color: 'negative',
+      color: isDisabledError ? 'warning' : 'negative',
       position: 'top',
-      icon: 'warning',
-      timeout: 3500
+      icon: isDisabledError ? 'warning' : 'warning',
+      timeout: isDisabledError ? 6000 : 3500,
+      html: true,
+      caption: isDisabledError ? 'Contactez l\'administrateur pour réactiver votre compte.' : null
     })
   }
 }

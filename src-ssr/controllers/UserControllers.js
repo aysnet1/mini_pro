@@ -134,7 +134,8 @@ const GetAllUser = async (req, res) => {
         email,
         tel,
         role,
-        photo_profil
+        photo_profil,
+        is_disabled
       FROM user`
     );
 
@@ -171,13 +172,16 @@ const GetUser = async (req, res) => {
         u.photo_profil,
         e.budget,
         e.habitudes,
-        e.universite,
+        e.universite as id_universite,
         e.recherche_ville,
         p.adress,
-        p.type
+        p.type,
+        et.id AS etablissement_id,
+        et.label_fr AS universite
       FROM user u
       LEFT JOIN etudiant e ON u.id = e.id
       LEFT JOIN proprietaire p ON u.id = p.id
+      LEFT JOIN etablissement et ON e.universite = et.id
       WHERE u.id = ?`,
       [id]
     );
@@ -365,6 +369,13 @@ const SigninUser = async (req, res) => {
     // à cet emplacement l'utilisateur (user) existe dans la BD avec le bon mail
     const user = users[0];
 
+    // Vérifier si l'utilisateur est désactivé
+    if (user.is_disabled === 1) {
+      return res.status(403).json({
+        error: "Votre compte a été désactivé par l'administrateur. Veuillez le contacter pour plus d'informations.",
+      });
+    }
+
     // Comparer le mot de passe passer dans le request est égale à celui récupérer dans la variable user
     const result = await compare(
       mot_de_passe,
@@ -464,6 +475,7 @@ const RegisterUser = async (req, res) => {
           `INSERT INTO etudiant (id, budget, habitudes, universite, recherche_ville) VALUES (?, ?, ?, ?, ?)`,
           [userId, budget || null, habitudes || null, universite || null, recherche_ville || null]
         );
+
       } else if (role === 'proprietaire') {
         await connection.query(
           `INSERT INTO proprietaire (id, adress, type) VALUES (?, ?, ?)`,
@@ -594,12 +606,69 @@ const LogoutUser = (req, res) => {
   res.status(200).json({ message: "Déconnexion réussie." });
 };
 
+/**
+ * Contrôleur pour activer/désactiver un utilisateur.
+ * @route PATCH /users/:id/toggle-status
+ * @access Admin
+ */
+const ToggleUserStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { is_disabled } = req.body;
+
+    // Vérifier que is_disabled est un booléen ou 0/1
+    if (typeof is_disabled !== 'boolean' && ![0, 1].includes(is_disabled)) {
+      return res.status(400).json({
+        error: "Le champ is_disabled doit être un booléen (true/false ou 1/0).",
+      });
+    }
+
+    // Vérifier si l'utilisateur existe
+    const [existing] = await mysql.query(
+      "SELECT id, nom, prenom, email FROM user WHERE id = ?",
+      [id]
+    );
+
+    if (!existing.length) {
+      return res.status(404).json({ error: "Utilisateur non trouvé." });
+    }
+
+    const user = existing[0];
+    const newStatus = is_disabled ? 1 : 0;
+    const statusLabel = is_disabled ? 'désactivé' : 'activé';
+
+    // Mettre à jour le statut
+    await mysql.query(
+      "UPDATE user SET is_disabled = ? WHERE id = ?",
+      [newStatus, id]
+    );
+
+    res.status(200).json({
+      message: `Utilisateur ${statusLabel} avec succès.`,
+      user: {
+        id: user.id,
+        nom: user.nom,
+        prenom: user.prenom,
+        email: user.email,
+        is_disabled: newStatus
+      }
+    });
+  } catch (err) {
+    console.error("ToggleUserStatus error:", err);
+    res.status(500).json({
+      error: "Erreur lors de la mise à jour du statut.",
+      details: err.message,
+    });
+  }
+};
+
 export {
   AddUser,
   GetAllUser,
   GetUser,
   UpdateUser,
   DeleteUser,
+  ToggleUserStatus,
   GetAdminStats,
   SigninUser,
   RegisterUser,

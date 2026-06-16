@@ -48,6 +48,8 @@ const LogementSchema = z.object({
   ville: z.string(),
   adress: z.string(),
   prix: z.number(),
+  latitude: z.number(),
+  longitude: z.number(),
   nb_places: z.number(),
   equipemens: z.string().or(z.array(z.string())),
   photos: z.string().or(z.array(z.string())),
@@ -75,11 +77,12 @@ const searchLogementsTool = ai.defineTool(
     stream?.toolCall('searchLogements', { ville, budgetMax, type });
 
     let query = `
-      SELECT id, type, ville, adress, prix, nb_places, equipemens, photos, statut
+      SELECT id, type, ville, latitude ,longitude, adress, prix, nb_places, equipemens, photos, statut
+
       FROM logement
-      WHERE LOWER(ville) = LOWER(?) AND LOWER(statut) = 'disponible'
+      WHERE LOWER(ville) LIKE LOWER(?) AND LOWER(statut) = 'disponible'
     `;
-    const params = [ville];
+    const params = [`%${ville}%`];
 
     if (budgetMax !== undefined) { query += ` AND prix <= ?`; params.push(budgetMax); }
     if (type !== undefined) { query += ` AND LOWER(type) = LOWER(?)`; params.push(type); }
@@ -110,6 +113,26 @@ export const chatBotFlow = ai.defineFlow(
     const stream = new AgentStream(sendChunk);
     const sessionKey = userId ?? 'anonymous';
 
+    // get student info from db
+    const [users] = await db.query(
+      `SELECT
+        u.id,
+        u.nom,
+        u.prenom,
+        u.email,
+        u.tel,
+        u.role,
+        e.budget,
+        e.habitudes,
+        e.universite,
+        e.recherche_ville
+      FROM user u
+      LEFT JOIN etudiant e ON u.id = e.id
+      WHERE u.id = ?`,
+      [userId]
+    );
+
+
     try {
       activeStreams.set(sessionKey, stream);
 
@@ -120,9 +143,11 @@ export const chatBotFlow = ai.defineFlow(
         .map(h => ({ role: h.role, content: [{ text: h.content ?? '' }] }))
 
       const chat = ai.chat({
-        system: `Tu es un assistant de recherche de logement TakLog. Tu aides les utilisateurs à trouver des logements disponibles selon leurs critères (ville, budget, type). Utilise l'outil "searchLogements" dès que l'utilisateur mentionne une ville ou un budget. Présente les résultats de façon claire et concise.`,
+        system: `Tu es un assistant de recherche de logement TakLog. Tu aides les utilisateurs à trouver des logements disponibles selon leurs critères (ville, budget, type). Utilise l'outil "searchLogements" dès que l'utilisateur mentionne une ville ou un budget. Présente les résultats de façon claire et concise. aussi, tu peux répondre à des questions générales sur la location de logement étudiant en Tunisie.
+        student info: ${JSON.stringify(users[0] || {})}
+        `,
 
-        model: googleAI.model('gemini-2.5-flash'),
+        model: googleAI.model('gemini-3.5-flash'),
         tools: [searchLogementsTool],
         messages,
 

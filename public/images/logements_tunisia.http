@@ -1,0 +1,761 @@
+### ═══════════════════════════════════════════════════
+###   30 LOGEMENTS - TUNISIE  🇹🇳
+###   Villes : Tunis · Ariana · Sousse · Sfax · Monastir
+###            Nabeul · Hammamet · Bizerte · Kairouan · Gabès
+### ═══════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────
+#  TUNIS  (1 → 8)
+# ──────────────────────────────────────────────────────
+
+### Logement 1 — Appartement · El Manar · Tunis
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue Ibn Khaldoun, El Manar 2, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8338,
+  "longitude": 10.1569,
+  "type": "appartement",
+  "prix": 700,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "climatisation", "machine à laver"],
+  "description": "Bel appartement moderne proche de l'Université El Manar. Idéal pour 3 étudiants, bien desservi par les transports en commun.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 2 — Studio · Bardo · Tunis
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Habib Bourguiba, Bardo, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8104,
+  "longitude": 10.1327,
+  "type": "studio",
+  "prix": 480,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "chauffage"],
+  "description": "Studio calme et lumineux au Bardo. Parfait pour un étudiant souhaitant un espace personnel et tranquille.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 3 — Chambre · Menzah 6 · Tunis
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Cité Menzah 6, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8583,
+  "longitude": 10.1872,
+  "type": "chambre",
+  "prix": 280,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "chauffage", "salle de bain partagée"],
+  "description": "Chambre meublée dans une résidence calme à Menzah 6. Proche des lignes de métro et des commerces.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 4 — Appartement · Cité El Khadra · Tunis
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue de la République, Cité El Khadra, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8200,
+  "longitude": 10.1700,
+  "type": "appartement",
+  "prix": 800,
+  "nb_places": 4,
+  "equipemens": ["wifi", "cuisine équipée", "climatisation", "parking", "gardien"],
+  "description": "Grand appartement 3 pièces en plein cœur de la ville. Idéal pour une colocation étudiante, sécurisé avec gardien.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 5 — Studio · Lac 1 · Tunis
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue du Lac Malaren, Les Berges du Lac 1, Tunis",
+  "ville": "Tunis",
+  "latitude": 36.8380,
+  "longitude": 10.2300,
+  "type": "studio",
+  "prix": 650,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "climatisation", "sécurité 24h"],
+  "description": "Studio haut standing aux Berges du Lac. Vue dégagée, immeuble sécurisé, idéal pour étudiant exigeant.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 6 — Appartement · Ariana Ville
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Hédi Nouira, Ariana Ville",
+  "ville": "Ariana",
+  "latitude": 36.8625,
+  "longitude": 10.1956,
+  "type": "appartement",
+  "prix": 620,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "chauffage", "ascenseur"],
+  "description": "Appartement spacieux à Ariana Ville avec ascenseur. Proche du métro léger et des universités de la banlieue nord.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 7 — Chambre · Riadh El Andalous · Ariana
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Cité Riadh El Andalous, Ariana",
+  "ville": "Ariana",
+  "latitude": 36.8800,
+  "longitude": 10.1980,
+  "type": "chambre",
+  "prix": 250,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "cuisine partagée"],
+  "description": "Chambre dans une maison familiale à Riadh El Andalous. Environnement calme et sécurisé, idéal pour filles.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 8 — Studio · La Marsa
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue de la Plage, La Marsa",
+  "ville": "La Marsa",
+  "latitude": 36.8781,
+  "longitude": 10.3247,
+  "type": "studio",
+  "prix": 750,
+  "nb_places": 1,
+  "equipemens": ["wifi", "climatisation", "cuisine", "terrasse", "vue mer"],
+  "description": "Studio avec terrasse vue mer à La Marsa. Cadre idyllique à 5 min de la plage, desservi par le TGM.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  SOUSSE  (9 → 14)
+# ──────────────────────────────────────────────────────
+
+### Logement 9 — Appartement · Centre Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Habib Bourguiba, Centre ville, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.8288,
+  "longitude": 10.6405,
+  "type": "appartement",
+  "prix": 580,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "climatisation", "chauffage"],
+  "description": "Appartement bien situé en plein centre de Sousse. À pied de l'Université de Sousse et du marché central.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 10 — Studio · Khezama · Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Route de Khezama Ouest, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.8500,
+  "longitude": 10.5900,
+  "type": "studio",
+  "prix": 430,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "eau chaude"],
+  "description": "Studio fonctionnel à Khezama proche de l'ISSAT et de l'IHEC Sousse. Calme et bien desservi.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1484154218962-a197022b5858?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 11 — Chambre · Sahloul · Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Cité Sahloul 4, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.8700,
+  "longitude": 10.5700,
+  "type": "chambre",
+  "prix": 220,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "salle de bain partagée", "cuisine partagée"],
+  "description": "Chambre meublée dans une villa à Sahloul. Ambiance familiale, proche de la faculté de médecine de Sousse.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1554995207-c18c203602cb?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 12 — Appartement · Sahloul · Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Résidence Les Pins, Sahloul 3, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.8650,
+  "longitude": 10.5750,
+  "type": "appartement",
+  "prix": 650,
+  "nb_places": 4,
+  "equipemens": ["wifi", "cuisine équipée", "climatisation", "parking", "gardien"],
+  "description": "Grand appartement en résidence sécurisée à Sahloul. 4 chambres disponibles pour colocation étudiante.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 13 — Maison · M'saken · Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue Hédi Chaker, M'saken, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.7300,
+  "longitude": 10.5700,
+  "type": "maison",
+  "prix": 900,
+  "nb_places": 5,
+  "equipemens": ["wifi", "cuisine", "jardin", "parking", "machine à laver"],
+  "description": "Maison indépendante avec jardin à M'saken. Idéale pour un groupe d'étudiants cherchant calme et espace.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1568605114967-8130f3a36994?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 14 — Studio · Port El Kantaoui · Sousse
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Zone touristique Port El Kantaoui, Sousse",
+  "ville": "Sousse",
+  "latitude": 35.8950,
+  "longitude": 10.5950,
+  "type": "studio",
+  "prix": 500,
+  "nb_places": 1,
+  "equipemens": ["wifi", "climatisation", "cuisine", "piscine partagée"],
+  "description": "Studio avec accès piscine à Port El Kantaoui. Cadre agréable à 10 min du centre de Sousse.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  SFAX  (15 → 19)
+# ──────────────────────────────────────────────────────
+
+### Logement 15 — Appartement · Centre Sfax
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Hédi Chaker, Centre ville, Sfax",
+  "ville": "Sfax",
+  "latitude": 34.7398,
+  "longitude": 10.7600,
+  "type": "appartement",
+  "prix": 520,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "chauffage", "ascenseur"],
+  "description": "Appartement central à Sfax, à deux pas de la faculté des sciences et de la gare. Idéal pour étudiants.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 16 — Studio · Route Soukra · Sfax
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Route de Soukra km 3, Sfax",
+  "ville": "Sfax",
+  "latitude": 34.7600,
+  "longitude": 10.7400,
+  "type": "studio",
+  "prix": 380,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "eau chaude", "cuisine"],
+  "description": "Studio économique sur la route de Soukra. Proche des grandes écoles et de l'hôpital universitaire de Sfax.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 17 — Chambre · El Ain · Sfax
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Cité El Ain, Sfax",
+  "ville": "Sfax",
+  "latitude": 34.7200,
+  "longitude": 10.7800,
+  "type": "chambre",
+  "prix": 200,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "salle de bain partagée"],
+  "description": "Chambre meublée dans une résidence étudiante privée à El Ain. Ambiance studieuse, surveillée.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1416331108676-a22ccb276e35?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 18 — Appartement · Sfax Sud
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue Farhat Hached, Sfax Sud",
+  "ville": "Sfax",
+  "latitude": 34.7150,
+  "longitude": 10.7550,
+  "type": "appartement",
+  "prix": 560,
+  "nb_places": 2,
+  "equipemens": ["wifi", "cuisine équipée", "climatisation", "machine à laver"],
+  "description": "Appartement 2 chambres rénové à Sfax Sud. Lumineux, calme, proche du campus universitaire.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 19 — Maison · Route Menzel Chaker · Sfax
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Route Menzel Chaker km 1, Sfax",
+  "ville": "Sfax",
+  "latitude": 34.7000,
+  "longitude": 10.7300,
+  "type": "maison",
+  "prix": 850,
+  "nb_places": 6,
+  "equipemens": ["wifi", "cuisine", "jardin", "parking", "eau chaude"],
+  "description": "Maison indépendante avec cour intérieure. Parfaite pour une grande colocation étudiante, quartier calme.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  MONASTIR & MAHDIA  (20 → 23)
+# ──────────────────────────────────────────────────────
+
+### Logement 20 — Appartement · Centre Monastir
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue de l'Indépendance, Monastir",
+  "ville": "Monastir",
+  "latitude": 35.7773,
+  "longitude": 10.8262,
+  "type": "appartement",
+  "prix": 550,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "climatisation", "vue mer"],
+  "description": "Appartement avec vue sur mer à Monastir. À 10 min à pied de la fac de médecine et des plages.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1588880331179-bc9b93a8cb5e?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 21 — Studio · Skanes · Monastir
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Route de l'Aéroport, Skanes, Monastir",
+  "ville": "Monastir",
+  "latitude": 35.7580,
+  "longitude": 10.7985,
+  "type": "studio",
+  "prix": 400,
+  "nb_places": 1,
+  "equipemens": ["wifi", "climatisation", "bureau", "eau chaude"],
+  "description": "Studio neuf près de l'aéroport de Monastir. Connexion facile vers Tunis, cadre résidentiel paisible.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1567767292278-a4f21aa2d36e?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 22 — Chambre · Centre Mahdia
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue de la Médina, Mahdia",
+  "ville": "Mahdia",
+  "latitude": 35.5040,
+  "longitude": 11.0622,
+  "type": "chambre",
+  "prix": 210,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "cuisine partagée"],
+  "description": "Chambre dans une maison traditionnelle en médina à Mahdia. Cadre authentique, proche de l'ISSAT Mahdia.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 23 — Appartement · Hiboun · Mahdia
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Zone résidentielle Hiboun, Mahdia",
+  "ville": "Mahdia",
+  "latitude": 35.4900,
+  "longitude": 11.0500,
+  "type": "appartement",
+  "prix": 480,
+  "nb_places": 2,
+  "equipemens": ["wifi", "cuisine", "chauffage", "parking"],
+  "description": "Appartement 2 chambres calme à Hiboun. Idéal pour 2 étudiants, à 5 km du campus universitaire de Mahdia.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  NABEUL & HAMMAMET  (24 → 25)
+# ──────────────────────────────────────────────────────
+
+### Logement 24 — Appartement · Centre Nabeul
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Habib Thameur, Nabeul",
+  "ville": "Nabeul",
+  "latitude": 36.4513,
+  "longitude": 10.7357,
+  "type": "appartement",
+  "prix": 500,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "climatisation", "chauffage"],
+  "description": "Appartement bien situé à Nabeul, proche de l'ISET Nabeul. Ville dynamique avec bons transports vers Tunis.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 25 — Studio · Hammamet Nord
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue des Jasmins, Hammamet Nord",
+  "ville": "Hammamet",
+  "latitude": 36.4100,
+  "longitude": 10.6250,
+  "type": "studio",
+  "prix": 550,
+  "nb_places": 1,
+  "equipemens": ["wifi", "climatisation", "cuisine", "piscine partagée", "vue jardin"],
+  "description": "Studio dans résidence avec piscine à Hammamet Nord. Cadre verdoyant, idéal pour étudier dans la sérénité.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  BIZERTE  (26 → 27)
+# ──────────────────────────────────────────────────────
+
+### Logement 26 — Appartement · Centre Bizerte
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Rue 2 Mars 1934, Centre ville, Bizerte",
+  "ville": "Bizerte",
+  "latitude": 37.2744,
+  "longitude": 9.8739,
+  "type": "appartement",
+  "prix": 490,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "chauffage", "balcon"],
+  "description": "Appartement avec balcon vue canal à Bizerte. Proche de l'ISSAT Bizerte et du port de plaisance.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1507089947368-19c1da9775ae?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+### Logement 27 — Chambre · Corniche · Bizerte
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Route de la Corniche, Bizerte",
+  "ville": "Bizerte",
+  "latitude": 37.2850,
+  "longitude": 9.8850,
+  "type": "chambre",
+  "prix": 230,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "salle de bain partagée", "vue mer"],
+  "description": "Chambre meublée en bord de mer à Bizerte. Environnement exceptionnel, calme absolu pour les révisions.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1505691723518-36a5ac3be353?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  KAIROUAN  (28)
+# ──────────────────────────────────────────────────────
+
+### Logement 28 — Appartement · Centre Kairouan
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue de la République, Kairouan",
+  "ville": "Kairouan",
+  "latitude": 35.6712,
+  "longitude": 10.1006,
+  "type": "appartement",
+  "prix": 420,
+  "nb_places": 4,
+  "equipemens": ["wifi", "cuisine", "chauffage", "eau chaude"],
+  "description": "Appartement économique proche de l'ISSAT Kairouan et de la mosquée Okba. Idéal pour colocation étudiante.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  GABÈS  (29)
+# ──────────────────────────────────────────────────────
+
+### Logement 29 — Appartement · Gabès Ville
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Avenue Farhat Hached, Gabès Ville",
+  "ville": "Gabès",
+  "latitude": 33.8833,
+  "longitude": 10.0972,
+  "type": "appartement",
+  "prix": 400,
+  "nb_places": 3,
+  "equipemens": ["wifi", "cuisine", "climatisation", "parking"],
+  "description": "Appartement 3 pièces à Gabès. Proche de l'ISSG et de la faculté des sciences de Gabès, quartier résidentiel.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1565182999561-18d7dc61c393?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###
+
+# ──────────────────────────────────────────────────────
+#  GAFSA  (30)
+# ──────────────────────────────────────────────────────
+
+### Logement 30 — Chambre · Gafsa
+POST {{baseUrl}}/api/logements
+Content-Type: {{json}}
+Authorization: Bearer {{login_owner.response.body.$.token}}
+
+{
+  "adress": "Cité des Enseignants, Gafsa",
+  "ville": "Gafsa",
+  "latitude": 34.4250,
+  "longitude": 8.7842,
+  "type": "chambre",
+  "prix": 180,
+  "nb_places": 1,
+  "equipemens": ["wifi", "bureau", "eau chaude", "cuisine partagée"],
+  "description": "Chambre abordable dans la Cité des Enseignants à Gafsa. Option économique proche de l'Université de Gafsa.",
+  "statut": "disponible",
+  "photos": [
+    "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1200&q=80",
+    "https://images.unsplash.com/photo-1560185007-c5ca9d2c014d?auto=format&fit=crop&w=1200&q=80"
+  ]
+}
+
+###

@@ -1,4 +1,5 @@
 import db from '../database/db.js';
+import { sendReservationNotification } from '../services/emailService.js';
 
 let reservationSchemaReady = false;
 let reservationSchemaPromise = null;
@@ -88,7 +89,7 @@ export const ReserveLogement = async (req, res) => {
     }
 
     const [logements] = await db.query(
-      `SELECT id, proprietaire_id, statut FROM logement WHERE id = ?`,
+      `SELECT id, proprietaire_id, statut, adress, ville FROM logement WHERE id = ?`,
       [logementId]
     );
 
@@ -97,12 +98,51 @@ export const ReserveLogement = async (req, res) => {
     }
 
     const logement = logements[0];
-    if (logement.statut && logement.statut !== "disponible") {
-      return res.status(409).json({ error: "Ce logement n'est pas disponible." });
-    }
 
     if (Number(logement.proprietaire_id) === Number(etudiant_id)) {
       return res.status(403).json({ error: "Vous ne pouvez pas reserver votre propre logement." });
+    }
+
+    // Récupérer les informations du propriétaire
+    const [proprietaires] = await db.query(
+      `SELECT u.id, u.nom, u.prenom, u.email, u.tel
+       FROM user u
+       JOIN proprietaire p ON u.id = p.id
+       WHERE p.id = ?`,
+      [logement.proprietaire_id]
+    );
+
+    if (!proprietaires.length) {
+      return res.status(404).json({ error: "Propriétaire introuvable." });
+    }
+
+    const proprietaire = proprietaires[0];
+
+    // Récupérer les informations de l'étudiant
+    const [etudiants] = await db.query(
+      `SELECT u.id, u.nom, u.prenom, u.email, u.tel
+       FROM user u
+       JOIN etudiant e ON u.id = e.id
+       WHERE e.id = ?`,
+      [etudiant_id]
+    );
+
+    if (!etudiants.length) {
+      return res.status(404).json({ error: "Étudiant introuvable." });
+    }
+
+    const etudiant = etudiants[0];
+
+    // Check for date overlap with existing ACCEPTED reservations
+    const [conflicts] = await db.query(
+      `SELECT 1 FROM etudiant_logement
+       WHERE logement_id = ? AND statut = 'acceptee'
+       AND date_debut < ? AND date_fin > ?
+       LIMIT 1`,
+      [logementId, date_fin, date_debut]
+    );
+    if (conflicts.length > 0) {
+      return res.status(409).json({ error: "Ce logement est d\u00e9j\u00e0 r\u00e9serv\u00e9 pour cette p\u00e9riode." });
     }
 
     const [existingRows] = await db.query(
@@ -134,6 +174,24 @@ export const ReserveLogement = async (req, res) => {
         [etudiant_id, logementId, date_debut, date_fin, dureeMois, RESERVATION_STATUS.PENDING]
       );
     }
+
+    // Envoyer une notification email au propriétaire (en arrière-plan, ne bloque pas la réponse)
+    sendReservationNotification({
+      proprietaireEmail: proprietaire.email,
+      proprietaireNom: proprietaire.nom,
+      etudiantNom: etudiant.nom,
+      etudiantPrenom: etudiant.prenom,
+      etudiantEmail: etudiant.email,
+      etudiantTel: etudiant.tel,
+      logementAdresse: logement.adress,
+      logementVille: logement.ville,
+      date_debut,
+      date_fin,
+      duree: dureeMois,
+    }).catch((emailError) => {
+      console.error('Erreur lors de l\'envoi de la notification email:', emailError.message);
+      // On ne retourne pas d'erreur à l'utilisateur car la réservation a réussi
+    });
 
     res.status(201).json({
       message: "Demande de reservation envoyee au proprietaire.",
@@ -292,6 +350,7 @@ export const GetOwnerReservations = async (req, res) => {
          el.duree,
          el.statut AS reservation_statut,
          el.note_proprietaire,
+         el.updated_at,
          l.adress,
          l.ville,
          l.type,
@@ -355,6 +414,8 @@ export const UpdateReservationStatusByOwner = async (req, res) => {
     const [rows] = await connection.query(
       `SELECT
          el.statut AS reservation_statut,
+         el.date_debut,
+         el.date_fin,
          l.id AS logement_id,
          l.statut AS logement_statut,
          l.proprietaire_id
@@ -383,25 +444,7 @@ export const UpdateReservationStatusByOwner = async (req, res) => {
     }
 
     if (requestedStatus === RESERVATION_STATUS.ACCEPTED) {
-      const canAcceptFromStatut = ['disponible', 'reserve'].includes(`${reservation.logement_statut || ''}`);
-      if (!canAcceptFromStatut && reservation.reservation_statut !== RESERVATION_STATUS.ACCEPTED) {
-        await connection.rollback();
-        return res.status(409).json({ error: "Le logement n'est plus disponible pour accepter une nouvelle demande." });
-      }
-
-      const [acceptedRows] = await connection.query(
-        `SELECT etudiant_id
-         FROM etudiant_logement
-         WHERE logement_id = ? AND statut = ? AND etudiant_id <> ?
-         LIMIT 1`,
-        [logement_id, RESERVATION_STATUS.ACCEPTED, etudiant_id]
-      );
-
-      if (acceptedRows.length > 0) {
-        await connection.rollback();
-        return res.status(409).json({ error: 'Une autre demande est deja acceptee pour ce logement.' });
-      }
-
+      // Accept this reservation
       await connection.query(
         `UPDATE etudiant_logement
          SET statut = ?, note_proprietaire = ?, updated_at = NOW()
@@ -409,16 +452,17 @@ export const UpdateReservationStatusByOwner = async (req, res) => {
         [RESERVATION_STATUS.ACCEPTED, note || null, logement_id, etudiant_id]
       );
 
+      // Auto-refuse OTHER pending reservations that overlap with this period
       await connection.query(
         `UPDATE etudiant_logement
-         SET statut = ?, note_proprietaire = COALESCE(note_proprietaire, ?), updated_at = NOW()
-         WHERE logement_id = ? AND etudiant_id <> ? AND statut = ?`,
-        [RESERVATION_STATUS.REJECTED, 'Demande non retenue (logement deja attribue).', logement_id, etudiant_id, RESERVATION_STATUS.PENDING]
-      );
-
-      await connection.query(
-        `UPDATE logement SET statut = 'reserve' WHERE id = ?`,
-        [logement_id]
+         SET statut = 'refusee',
+             note_proprietaire = COALESCE(note_proprietaire, 'Demande non retenue : période déjà attribuée.'),
+             updated_at = NOW()
+         WHERE logement_id = ?
+           AND etudiant_id <> ?
+           AND statut = 'en_attente'
+           AND date_debut < ? AND date_fin > ?`,
+        [logement_id, etudiant_id, reservation.date_fin, reservation.date_debut]
       );
     } else {
       const nextStatus = RESERVATION_STATUS.REJECTED;
@@ -430,24 +474,14 @@ export const UpdateReservationStatusByOwner = async (req, res) => {
         [nextStatus, note || null, logement_id, etudiant_id]
       );
 
-      const [acceptedRows] = await connection.query(
-        `SELECT COUNT(*) AS total
-         FROM etudiant_logement
-         WHERE logement_id = ? AND statut = ?`,
-        [logement_id, RESERVATION_STATUS.ACCEPTED]
-      );
-
-      if (Number(acceptedRows[0]?.total || 0) === 0) {
-        await connection.query(`UPDATE logement SET statut = 'disponible' WHERE id = ?`, [logement_id]);
-      }
     }
 
     await connection.commit();
 
     return res.status(200).json({
       message: requestedStatus === RESERVATION_STATUS.ACCEPTED
-        ? 'Demande acceptee. Le logement est maintenant reserve.'
-        : 'Demande refusee avec succes.',
+        ? 'Demande acceptee.'
+        : 'Demande refusee.',
       logement_id,
       etudiant_id,
       statut: requestedStatus

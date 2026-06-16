@@ -28,16 +28,8 @@ const normalizeLogement = (logement) => ({
 
 const normalizeText = (value) => `${value || ''}`.trim().toLowerCase();
 
-const uniqueById = (items) => {
-  const seen = new Set();
-  return items.filter((item) => {
-    if (seen.has(item.id)) return false;
-    seen.add(item.id);
-    return true;
-  });
-};
 
-const take = (items, count = 10) => items.slice(0, count);
+
 
 const extractUniversityKeywords = (universite) => {
   const stopWords = new Set(['universite', 'université', 'faculte', 'faculté', 'institut', 'iset', 'ecole', 'école']);
@@ -120,8 +112,19 @@ export const GetAllLogements = async (req, res) => {
     let selectedVille = null;
     let selectedUniversite = null;
 
-    // Filtres carte : budget, type, localisation (ville/adresse)
-    const { budget_max, budget_min, type, localisation, ville, universite, all_villes, statut, minLat, maxLat, minLng, maxLng } = req.query;
+    const {
+      q,
+      budget_max, budget_min,
+      type, types,
+      localisation, adress,
+      ville,
+      universite,
+      all_villes,
+      statut,
+      nb_places_min,
+      minLat, maxLat, minLng, maxLng
+    } = req.query;
+
     const showAllVilles = ['1', 'true', 'yes', 'oui'].includes(String(all_villes || '').toLowerCase());
 
     if (req.user?.role !== 'admin') {
@@ -129,25 +132,22 @@ export const GetAllLogements = async (req, res) => {
       queryParams.push('disponible');
     }
 
+    // --- Student context ---
     if (req.user?.role === 'etudiant') {
       const [students] = await db.query(
-        `SELECT recherche_ville, universite
-         FROM etudiant
-         WHERE id = ?
-         LIMIT 1`,
+        `SELECT recherche_ville, universite FROM etudiant WHERE id = ? LIMIT 1`,
         [req.user.id]
       );
-
       studentContext = students[0] || null;
       selectedVille = showAllVilles
         ? null
         : (ville || studentContext?.recherche_ville || '').trim() || null;
       selectedUniversite = (universite || studentContext?.universite || '').trim() || null;
 
-      if (selectedVille) {
+      if (selectedVille && !q) {
         query += " AND ville = ?";
         queryParams.push(selectedVille);
-      } else if (!showAllVilles) {
+      } else if (!showAllVilles && !q) {
         return res.status(200).json({
           logements: [],
           contexte: {
@@ -159,6 +159,14 @@ export const GetAllLogements = async (req, res) => {
       }
     }
 
+    // --- Free-text search: q matches ville, adress, type, description ---
+    if (q && q.trim()) {
+      const term = `%${q.trim()}%`;
+      query += " AND (ville LIKE ? OR adress LIKE ? OR type LIKE ? OR description LIKE ?)";
+      queryParams.push(term, term, term, term);
+    }
+
+    // --- Budget ---
     if (budget_max) {
       query += " AND prix <= ?";
       queryParams.push(parseFloat(budget_max));
@@ -167,72 +175,119 @@ export const GetAllLogements = async (req, res) => {
       query += " AND prix >= ?";
       queryParams.push(parseFloat(budget_min));
     }
-    if (type) {
+
+    // --- Type: single value or comma-separated list ---
+    const typeList = types
+      ? String(types).split(',').map(t => t.trim()).filter(Boolean)
+      : type ? [String(type).trim()] : [];
+    if (typeList.length === 1) {
       query += " AND type = ?";
-      queryParams.push(type);
+      queryParams.push(typeList[0]);
+    } else if (typeList.length > 1) {
+      query += ` AND type IN (${typeList.map(() => '?').join(',')})`;
+      queryParams.push(...typeList);
     }
+
+    // --- Ville (non-etudiant or when q is also set) ---
     if (ville && req.user?.role !== 'etudiant') {
       selectedVille = ville;
       query += " AND ville = ?";
       queryParams.push(ville);
     }
-    if (localisation) {
+
+    // --- Address text search ---
+    const addrTerm = adress || localisation;
+    if (addrTerm) {
       query += " AND adress LIKE ?";
-      queryParams.push(`%${localisation}%`);
+      queryParams.push(`%${addrTerm.trim()}%`);
     }
-    if (statut) {
+
+    // --- Minimum places ---
+    if (nb_places_min) {
+      query += " AND nb_places >= ?";
+      queryParams.push(parseInt(nb_places_min, 10));
+    }
+
+    // --- Statut override (admin) ---
+    if (statut && req.user?.role === 'admin') {
       query += " AND statut = ?";
       queryParams.push(statut);
     }
+
+    // --- Bounding box ---
     if (minLat && maxLat && minLng && maxLng) {
       query += " AND latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?";
       queryParams.push(Number(minLat), Number(maxLat), Number(minLng), Number(maxLng));
     }
 
-    query += " ORDER BY id DESC";
+    // --- Pagination ---
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 12; // Default 12 items per page
+    const offset = (page - 1) * limit;
+
+    // Get total count for pagination
+    const countQuery = query.replace(/ORDER BY id DESC/, '');
+    const [countResult] = await db.query(`SELECT COUNT(*) as total FROM (${countQuery}) as count_sub`, queryParams);
+    const total = countResult[0]?.total || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    query += " LIMIT ? OFFSET ?";
+    queryParams.push(limit, offset);
 
     const [logements] = await db.query(query, queryParams);
-
     let normalizedLogements = logements.map(normalizeLogement);
 
+    // --- University scoring for students ---
     if (req.user?.role === 'etudiant') {
       const universityKeywords = extractUniversityKeywords(selectedUniversite);
       normalizedLogements = normalizedLogements
         .map((logement) => {
           const universityScore = computeUniversityMatchScore(logement, universityKeywords);
-          return {
-            ...logement,
-            match_universite: universityScore > 0,
-            university_score: universityScore
-          };
+          return { ...logement, match_universite: universityScore > 0, university_score: universityScore };
         })
         .sort((a, b) => {
           if (b.university_score !== a.university_score) return b.university_score - a.university_score;
           return a.prix - b.prix;
         });
 
+      const contextMsg = q
+        ? `Résultats pour "${q}"${selectedUniversite ? ', priorisés selon votre université.' : '.'}`
+        : showAllVilles
+          ? (selectedUniversite ? 'Résultats sur toutes les villes, priorisés selon votre université.' : 'Résultats sur toutes les villes.')
+          : (selectedUniversite ? 'Résultats filtrés selon votre ville de recherche et priorisés selon votre université.' : 'Résultats filtrés selon votre ville de recherche.');
+
       return res.status(200).json({
         logements: normalizedLogements,
-        contexte: {
-          filtreVille: selectedVille,
-          universite: selectedUniversite,
-          message: showAllVilles
-            ? (selectedUniversite
-              ? 'Résultats sur toutes les villes, priorisés selon votre université.'
-              : 'Résultats sur toutes les villes.')
-            : (selectedUniversite
-              ? 'Résultats filtrés selon votre ville de recherche et priorisés selon votre université.'
-              : 'Résultats filtrés selon votre ville de recherche.')
-        }
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages,
+          hasNext: page < totalPages,
+          hasPrev: page > 1
+        },
+        contexte: { filtreVille: selectedVille, universite: selectedUniversite, message: contextMsg }
       });
     }
 
+    const contextMsg = q
+      ? `Résultats pour "${q.trim()}".`
+      : 'Résultats de recherche.';
+
     res.status(200).json({
       logements: normalizedLogements,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
       contexte: {
         filtreVille: selectedVille || null,
         universite: (universite || '').trim() || null,
-        message: 'Résultats de recherche.'
+        message: contextMsg
       }
     });
   } catch (err) {
@@ -240,79 +295,142 @@ export const GetAllLogements = async (req, res) => {
   }
 };
 
-/**
- * Home feed personnalisé pour la page d'accueil
- * @route GET /api/logements/home-feed
- */
+const SELECT_LOGEMENT_WITH_STATS = `
+  SELECT l.*,
+    COALESCE((SELECT AVG(note) FROM avis WHERE logement_id = l.id), 0) AS rating,
+    COALESCE((SELECT COUNT(*) FROM avis WHERE logement_id = l.id), 0) AS avis_count
+  FROM logement l
+  WHERE l.statut = 'disponible'
+`;
+
 export const GetHomeFeed = async (req, res) => {
+
+  try {
+    const [popularResult, latestResult] = await Promise.all([
+      db.query(`${SELECT_LOGEMENT_WITH_STATS} ORDER BY rating DESC, avis_count DESC, l.prix ASC LIMIT 14`),
+      db.query(`${SELECT_LOGEMENT_WITH_STATS} ORDER BY l.id DESC LIMIT 14`)
+    ]);
+
+    return res.status(200).json({
+      popular: popularResult[0].map(normalizeLogement),
+      latest: latestResult[0].map(normalizeLogement)
+    });
+
+  } catch (err) {
+    console.error('Error fetching home feed:', err);
+    return res.status(500).json({ error: 'Erreur serveur home feed' });
+  }
+};
+
+export const GetRecommendations = async (req, res) => {
   try {
     const userId = req.user?.id;
 
-    const [logementsRaw] = await db.query(
-      `SELECT l.*, COALESCE(r.rating, 0) AS rating, COALESCE(r.avis_count, 0) AS avis_count
-       FROM logement l
-       LEFT JOIN (
-         SELECT logement_id, AVG(note) AS rating, COUNT(*) AS avis_count
-         FROM avis
-         GROUP BY logement_id
-       ) r ON r.logement_id = l.id
-       WHERE l.statut = 'disponible'
-       ORDER BY l.id DESC`
-    );
-
-    const logements = logementsRaw.map((item) => ({
-      ...normalizeLogement(item),
-      rating: Number(item.rating || 0),
-      avis_count: Number(item.avis_count || 0)
-    }));
+    if (!userId || isNaN(Number(userId))) {
+      return res.status(401).json({ error: 'Non autorisé' });
+    }
 
     const [users] = await db.query(
-      `SELECT u.id, u.role, e.universite, e.recherche_ville
+      `SELECT
+        u.role,
+        e.universite as id_universite,
+        e.recherche_ville,
+        et.id AS etablissement_id,
+        et.label_fr AS universite,
+        et.lon AS universite_longitude,
+        et.lat AS universite_latitude
        FROM user u
        LEFT JOIN etudiant e ON e.id = u.id
+       LEFT JOIN etablissement et ON e.universite = et.id
        WHERE u.id = ?
        LIMIT 1`,
       [userId]
     );
 
-    const profile = users[0] || null;
-    const studyWilaya = normalizeText(profile?.recherche_ville);
-    const universityKeywords = extractUniversityKeywords(profile?.universite);
+    const profile = users[0];
+    if (!profile) {
+      return res.status(404).json({ error: 'Profil inexistant' });
+    }
 
-    const sameWilaya = studyWilaya
-      ? logements.filter((item) => normalizeText(item.ville) === studyWilaya)
-      : [];
+    const studyWilaya = normalizeText(profile.recherche_ville);
 
-    const nearUniversity = universityKeywords.length > 0
-      ? logements.filter((item) => {
-        const haystack = `${normalizeText(item.ville)} ${normalizeText(item.adress)}`;
-        return universityKeywords.some((keyword) => haystack.includes(keyword));
-      })
-      : sameWilaya;
+    const promises = {};
 
-    const popular = [...logements].sort((a, b) => {
-      if (b.rating !== a.rating) return b.rating - a.rating;
-      if (b.avis_count !== a.avis_count) return b.avis_count - a.avis_count;
-      return (a.prix || 0) - (b.prix || 0);
-    });
+    // -----------------------------
+    // 1. Same study wilaya
+    // -----------------------------
+    if (studyWilaya) {
+      promises.sameStudyWilaya = db.query(
+        `${SELECT_LOGEMENT_WITH_STATS} AND l.ville = ? ORDER BY l.id DESC LIMIT 14`,
+        [studyWilaya]
+      ).then(([rows]) => rows.map(normalizeLogement));
+    }
 
-    const recommended = uniqueById(
-      [...sameWilaya, ...nearUniversity, ...popular, ...logements]
-    );
 
-    res.status(200).json({
-      recommended: take(recommended, 14),
-      nearUniversity: take(uniqueById(nearUniversity), 14),
-      sameStudyWilaya: take(uniqueById(sameWilaya), 14),
-      popular: take(uniqueById(popular), 14),
+    // -----------------------------
+    // 3. NEW: Nearest logements by distance (REAL GEO)
+    // -----------------------------
+    if (profile.universite_latitude && profile.universite_longitude) {
+      promises.nearUniversityByDistance = db.query(
+        `
+        SELECT
+          l.*,
+          (
+            ST_Distance_Sphere(
+              POINT(l.longitude, l.latitude),
+              POINT(?, ?)
+            ) / 1000
+          ) AS distance_km
+        FROM logement l
+        WHERE l.latitude IS NOT NULL
+          AND l.longitude IS NOT NULL
+        ORDER BY distance_km ASC
+        LIMIT 5
+        `,
+        [
+          profile.universite_longitude,
+          profile.universite_latitude
+        ]
+      ).then(([rows]) =>
+        rows.map(r => ({
+          ...normalizeLogement(r),
+          distance:
+            r.distance_km < 1
+              ? `${Math.round(r.distance_km * 1000)} m`
+              : `${r.distance_km.toFixed(2)} km`
+        }))
+      );
+    }
+
+    // -----------------------------
+    // Resolve all promises
+    // -----------------------------
+    const keys = Object.keys(promises);
+    const resolvedValues = await Promise.all(Object.values(promises));
+
+    const feed = {
+      sameStudyWilaya: [],
+      nearUniversityByDistance: [],
+      ...Object.fromEntries(keys.map((key, i) => [key, resolvedValues[i]]))
+    };
+
+
+    return res.status(200).json({
+      sameStudyWilaya: feed.sameStudyWilaya,
+      nearUniversityByDistance: feed.nearUniversityByDistance,
+
       context: {
-        role: profile?.role || null,
-        universite: profile?.universite || null,
-        recherche_ville: profile?.recherche_ville || null
+        role: profile.role || null,
+        universite: profile.universite || null,
+        recherche_ville: profile.recherche_ville || null
       }
     });
+
   } catch (err) {
-    res.status(500).json({ error: 'Erreur de récupération du feed accueil', details: err.message });
+    console.error('Error fetching personalized recommendations:', err);
+    return res.status(500).json({
+      error: 'Erreur serveur recommandations'
+    });
   }
 };
 
@@ -327,12 +445,81 @@ export const GetMyLogements = async (req, res) => {
       return res.status(401).json({ error: "Non authentifié." });
     }
 
-    const [logements] = await db.query(
-      "SELECT * FROM logement WHERE proprietaire_id = ? ORDER BY id DESC",
-      [proprietaireId]
-    );
+    // Pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 6;
+    const offset = (page - 1) * limit;
 
-    res.status(200).json(logements.map(normalizeLogement));
+    // Search and filter parameters
+    const { q, type, statut, ville, prix_min, prix_max } = req.query;
+
+    // Build dynamic WHERE clause
+    const whereClauses = ["proprietaire_id = ?"];
+    const values = [proprietaireId];
+
+    if (q && q.trim()) {
+      const searchTerm = `%${q.trim()}%`;
+      whereClauses.push("(adress LIKE ? OR ville LIKE ? OR description LIKE ?)");
+      values.push(searchTerm, searchTerm, searchTerm);
+    }
+
+    if (type) {
+      whereClauses.push("type = ?");
+      values.push(type);
+    }
+
+    if (statut) {
+      whereClauses.push("statut = ?");
+      values.push(statut);
+    }
+
+    if (ville && ville.trim()) {
+      whereClauses.push("ville = ?");
+      values.push(ville.trim());
+    }
+
+    if (prix_min) {
+      whereClauses.push("prix >= ?");
+      values.push(parseFloat(prix_min));
+    }
+
+    if (prix_max) {
+      whereClauses.push("prix <= ?");
+      values.push(parseFloat(prix_max));
+    }
+
+    const whereClause = whereClauses.join(" AND ");
+
+    // Get total count
+    const [countResult] = await db.query(
+      `SELECT COUNT(*) as total FROM logement WHERE ${whereClause}`,
+      values
+    );
+    const total = countResult[0]?.total || 0;
+
+    // Get paginated results
+    const selectQuery = `SELECT * FROM logement WHERE ${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`;
+    const selectValues = [...values, limit, offset];
+    const [logements] = await db.query(selectQuery, selectValues);
+
+    res.status(200).json({
+      logements: logements.map(normalizeLogement),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: offset + logements.length < total
+      },
+      filters: {
+        q: q || null,
+        type: type || null,
+        statut: statut || null,
+        ville: ville || null,
+        prix_min: prix_min || null,
+        prix_max: prix_max || null
+      }
+    });
   } catch (err) {
     res.status(500).json({ error: "Erreur de récupération des logements propriétaire", details: err.message });
   }
@@ -556,5 +743,73 @@ export const DeleteLogementPhoto = async (req, res) => {
     res.status(200).json({ message: "Photo supprimée.", photos: updatedPhotos });
   } catch (err) {
     res.status(500).json({ error: "Erreur lors de la suppression de la photo.", details: err.message });
+  }
+};
+
+/**
+ * Recherche inline de logements par q (adress, ville, type)
+ * @route GET /api/logements/search?q=&ville=&type=&adress=
+ */
+export const SearchLogements = async (req, res) => {
+  try {
+    const { q = '', ville, type, adress } = req.query;
+    const term = q.trim();
+
+    if (!term && !ville && !type && !adress) {
+      return res.status(200).json({ logements: [] });
+    }
+
+    const conditions = ["statut = 'disponible'"];
+    const params = [];
+
+    if (term) {
+      conditions.push('(ville LIKE ? OR adress LIKE ? OR type LIKE ?)');
+      params.push(`%${term}%`, `%${term}%`, `%${term}%`);
+    }
+    if (ville) {
+      conditions.push('ville LIKE ?');
+      params.push(`%${ville.trim()}%`);
+    }
+    if (type) {
+      conditions.push('type LIKE ?');
+      params.push(`%${type.trim()}%`);
+    }
+    if (adress) {
+      conditions.push('adress LIKE ?');
+      params.push(`%${adress.trim()}%`);
+    }
+
+    const sql = `SELECT id, type, ville, adress, prix, photos, statut FROM logement WHERE ${conditions.join(' AND ')} LIMIT 7`;
+    const [rows] = await db.query(sql, params);
+
+    const logements = rows.map((l) => ({
+      ...l,
+      photos: parseJsonField(l.photos, [])
+    }));
+
+    return res.status(200).json({ logements });
+  } catch (err) {
+    return res.status(500).json({ error: 'Erreur de recherche.', details: err.message });
+  }
+};
+
+/**
+ * Récupérer les périodes réservées (acceptées) d'un logement — public
+ * @route GET /api/logements/:id/booked-dates
+ */
+export const GetLogementBookedDates = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [rows] = await db.query(
+      `SELECT el.date_debut, el.date_fin, u.prenom
+       FROM etudiant_logement el
+       JOIN user u ON u.id = el.etudiant_id
+       WHERE el.logement_id = ? AND el.statut = 'acceptee'
+       ORDER BY el.date_debut ASC`,
+      [id]
+    );
+    res.status(200).json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Erreur de récupération des dates réservées', details: err.message });
   }
 };

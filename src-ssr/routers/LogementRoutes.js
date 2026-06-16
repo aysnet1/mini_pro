@@ -1,6 +1,6 @@
 import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware.js';
-import { isAdmin, isProprietaire } from '../middlewares/roleMiddleware.js';
+import { isAdmin, isEtudiant, isProprietaire } from '../middlewares/roleMiddleware.js';
 import { uploadLogementPhotos, handleUploadErrors } from '../middlewares/uploadMiddleware.js';
 import {
   AddLogement,
@@ -12,15 +12,21 @@ import {
   DeleteLogement,
   SetLogementStatusByAdmin,
   UploadLogementPhotos,
-  DeleteLogementPhoto
+  DeleteLogementPhoto,
+  SearchLogements,
+  GetLogementBookedDates,
+  GetRecommendations
 } from '../controllers/LogementControllers.js';
 
 const logementroutes = express.Router();
 
 logementroutes.post('/', authMiddleware, isProprietaire, AddLogement);
-logementroutes.get('/home-feed', authMiddleware, GetHomeFeed);
-logementroutes.get('/me', authMiddleware, isProprietaire, GetMyLogements);
-logementroutes.get('/', authMiddleware, GetAllLogements);
+logementroutes.get('/public-feed', GetHomeFeed);
+logementroutes.get('/recommendations', authMiddleware, isEtudiant, GetRecommendations);
+logementroutes.get('/search', SearchLogements);
+logementroutes.get('/me', authMiddleware, GetMyLogements);
+logementroutes.get('/', GetAllLogements);
+logementroutes.get('/:id/booked-dates', GetLogementBookedDates);
 logementroutes.get('/:id', GetLogementById);
 logementroutes.put('/:id', authMiddleware, isProprietaire, UpdateLogement);
 logementroutes.patch('/:id/status', authMiddleware, isAdmin, SetLogementStatusByAdmin);

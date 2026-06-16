@@ -1,0 +1,50 @@
+### Test API Etablissements 
+### Base URL: http://localhost:9100/api/etablissements
+
+### Login admin
+# @name login_admin
+POST http://localhost:9100/api/users/signin
+Content-Type: application/json
+
+{
+  "email": "admin.test@takelog.local",
+  "mot_de_passe": "123456"
+}
+
+
+### Récupérer tous les établissements
+GET http://localhost:9100/api/admin/etablissements
+Authorization: Bearer {{login_admin.response.body.token}}
+
+### Récupérer un établissement par ID
+GET http://localhost:9100/api/admin/etablissements/1
+Authorization: Bearer {{login_admin.response.body.token}}
+
+
+
+### Mettre à jour un établissement
+PUT http://localhost:9100/api/admin/etablissements/1
+Authorization: Bearer {{login_admin.response.body.token}}
+Content-Type: application/json
+
+{
+  "label_fr": "Institut Supérieur de la Mode de Monastir - ISMM",
+  "website": "www.ismmm.rnu.tn"
+}
+
+### Supprimer un établissement
+DELETE http://localhost:9100/api/admin/etablissements/1
+Authorization: Bearer {{login_admin.response.body.token}}
+
+### Importer des établissements à partir d'un fichier JSON
+POST http://localhost:9100/api/admin/etablissements/import
+Authorization: Bearer {{login_admin.response.body.token}}
+Content-Type: application/json
+
+< ./etabdata.json
+
+### Exporter les établissements en JSON
+GET http://localhost:9100/api/admin/etablissements/export
+Authorization: Bearer {{login_admin.response.body.token}}
+
+

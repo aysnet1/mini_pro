@@ -1,0 +1,57 @@
+[
+    {
+        "etablissement_code": 806,
+        "university_code": 8,
+        "label_ar": "المعهد العالي لمهن الموضة بالمنستير",
+        "label_fr": "Institut Supérieur de la Mode de Monastir",
+        "website": "ismmm.rnu.tn",
+        "gouvernorat": "Monastir",
+        "type": "Public",
+        "lat": 35.76710391471817,
+        "lon": 10.841475766021075
+    },
+    {
+        "etablissement_code": 801,
+        "university_code": 8,
+        "label_ar": "المعهد العالي للإعلامية والمنطقة الرقمية بالمنستير",
+        "label_fr": "Institut Supérieur d'Informatique et du Numérique de Monastir",
+        "website": "isin.rnu.tn",
+        "gouvernorat": "Monastir",
+        "type": "Public",
+        "lat": 35.7756,
+        "lon": 10.8269
+    },
+    {
+        "etablissement_code": 802,
+        "university_code": 8,
+        "label_ar": "كلية الطب بالمنستير",
+        "label_fr": "Faculté de Médecine de Monastir",
+        "website": "fm.rnu.tn",
+        "gouvernorat": "Monastir",
+        "type": "Public",
+        "lat": 35.7647,
+        "lon": 10.8267
+    },
+    {
+        "etablissement_code": 803,
+        "university_code": 8,
+        "label_ar": "كلية الصيدلة بالمنستير",
+        "label_fr": "Faculté de Pharmacie de Monastir",
+        "website": "fphm.rnu.tn",
+        "gouvernorat": "Monastir",
+        "type": "Public",
+        "lat": 35.7638,
+        "lon": 10.8253
+    },
+    {
+        "etablissement_code": 804,
+        "university_code": 8,
+        "label_ar": "المعهد العالي للبيوتكنولوجيا بالمنستير",
+        "label_fr": "Institut Supérieur de Biotechnologie de Monastir",
+        "website": "isbm.rnu.tn",
+        "gouvernorat": "Monastir",
+        "type": "Public",
+        "lat": 35.7689,
+        "lon": 10.8294
+    }
+]

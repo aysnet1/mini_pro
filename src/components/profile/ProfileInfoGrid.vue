@@ -19,6 +19,29 @@
       <p class="label">Téléphone</p>
       <p class="value">{{ user?.tel ? `+216 ${user.tel}` : 'Non renseigné' }}</p>
     </article>
+
+    <!-- Champs spécifiques pour les étudiants -->
+    <template v-if="user?.role === 'etudiant'">
+      <article class="info-card">
+        <p class="label">Budget</p>
+        <p class="value">{{ user?.budget ? `${user.budget} DT` : 'Non renseigné' }}</p>
+      </article>
+
+      <article class="info-card">
+        <p class="label">Habitudes</p>
+        <p class="value">{{ user?.habitudes || 'Non renseigné' }}</p>
+      </article>
+
+      <article class="info-card">
+        <p class="label">Université</p>
+        <p class="value">{{ user?.universite || 'Non renseigné' }}</p>
+      </article>
+
+      <article class="info-card">
+        <p class="label">Ville recherchée</p>
+        <p class="value">{{ user?.recherche_ville || 'Non renseigné' }}</p>
+      </article>
+    </template>
   </section>
 </template>
 

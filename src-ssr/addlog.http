@@ -1,0 +1,34 @@
+
+@baseUrl = http://localhost:9100
+@json = application/json
+
+### ═══════════════════════════════════════════════════
+###   30 LOGEMENTS - TUNISIE  🇹🇳
+###   Villes : Tunis · Ariana · Sousse · Sfax · Monastir
+###            Nabeul · Hammamet · Bizerte · Kairouan · Gabès
+### ═══════════════════════════════════════════════════
+
+# ──────────────────────────────────────────────────────
+#  TUNIS  (1 → 8)
+# ──────────────────────────────────────────────────────
+### Login propriétaire
+# @name login_owner
+POST {{baseUrl}}/api/users/signin
+Content-Type: {{json}}
+
+{
+  "email": "owner.test@takelog.local",
+  "mot_de_passe": "123456"
+}
+
+### Logement 1 — Appartement · El Manar · Tunis
+POST {{baseUrl}}/api/admin/logements/import
+Authorization: Bearer {{login_owner.response.body.$.token}}
+Content-Type: application/json
+
+< ./logmentData.json
+
+###
+
+
+###

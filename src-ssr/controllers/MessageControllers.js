@@ -49,3 +49,24 @@ export const GetConversation = async (req, res) => {
     res.status(500).json({ error: "Erreur de récupération de la conversation", details: err.message });
   }
 };
+
+/**
+ * Supprimer tous les messages d'une conversation
+ * @route DELETE /api/messages/conversation/:user1/:user2
+ */
+export const DeleteConversation = async (req, res) => {
+  try {
+    const { user1, user2 } = req.params;
+
+    await db.query(
+      `DELETE FROM message
+       WHERE (expediteur_id = ? AND destinataire_id = ?)
+          OR (expediteur_id = ? AND destinataire_id = ?)`,
+      [user1, user2, user2, user1]
+    );
+
+    res.status(200).json({ message: "Conversation supprimée avec succès" });
+  } catch (err) {
+    res.status(500).json({ error: "Erreur lors de la suppression de la conversation", details: err.message });
+  }
+};

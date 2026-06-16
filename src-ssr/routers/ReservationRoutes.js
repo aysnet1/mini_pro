@@ -2,12 +2,12 @@ import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware.js';
 import { isEtudiant, isProprietaire } from '../middlewares/roleMiddleware.js';
 import {
-    ReserveLogement,
-    GetLogementOccupants,
-    GetMyReservations,
-    CancelMyReservation,
-    GetOwnerReservations,
-    UpdateReservationStatusByOwner
+  ReserveLogement,
+  GetLogementOccupants,
+  GetMyReservations,
+  CancelMyReservation,
+  GetOwnerReservations,
+  UpdateReservationStatusByOwner
 } from '../controllers/ReservationControllers.js';
 
 const reservationroutes = express.Router();

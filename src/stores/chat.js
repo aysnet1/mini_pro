@@ -197,6 +197,35 @@ export const useChatStore = defineStore('chat', {
       const key = makeKey(userId, agentId)
       this.sendingByKey[key] = !!value
     },
+
+    async clearConversation(userId, agentId) {
+      const numericUserId = Number(userId)
+      const numericAgentId = Number(agentId)
+
+      // Clear local state first
+      const key = makeKey(userId, agentId)
+      this.conversations[key] = []
+
+      // Call API to delete messages if user and agent IDs are valid
+      if (Number.isFinite(numericUserId) && Number.isFinite(numericAgentId)) {
+        try {
+          const response = await fetch(
+            `/api/messages/conversation/${numericUserId}/${numericAgentId}`,
+            {
+              method: 'DELETE',
+              headers: this.getAuthHeaders(),
+            }
+          )
+
+          if (!response.ok) {
+            const payload = await response.json().catch(() => ({}))
+            console.error('[chat] clear conversation failed:', payload?.error)
+          }
+        } catch (err) {
+          console.error('[chat] clear conversation error:', err)
+        }
+      }
+    },
   },
 })
 

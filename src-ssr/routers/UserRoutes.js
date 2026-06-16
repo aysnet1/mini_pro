@@ -8,6 +8,7 @@ import {
   GetUser,
   UpdateUser,
   DeleteUser,
+  ToggleUserStatus,
   SigninUser,
   RegisterUser,
   LogoutUser,
@@ -23,6 +24,7 @@ userroutes.get('/', authMiddleware, isAdmin, GetAllUser)
 userroutes.get('/:id', authMiddleware, GetUser)
 userroutes.put('/:id', authMiddleware, UpdateUser)
 userroutes.delete('/:id', authMiddleware, isAdmin, DeleteUser)
+userroutes.patch('/:id/toggle-status', authMiddleware, isAdmin, ToggleUserStatus)
 userroutes.post('/signin', SigninUser)
 userroutes.post('/logout', LogoutUser)
 

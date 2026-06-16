@@ -74,7 +74,7 @@ function loadGoogleMaps(apiKey) {
 
   loaderPromise = new Promise((resolve, reject) => {
     const script = document.createElement('script')
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=beta`
     script.async = true
     script.defer = true
     script.onload = () => resolve(window.google.maps)
@@ -86,7 +86,14 @@ function loadGoogleMaps(apiKey) {
 }
 
 function clearMarkers() {
-  markerInstances.forEach((marker) => marker.setMap(null))
+  markerInstances.forEach((markerObj) => {
+    if (markerObj.marker) {
+      markerObj.marker.map = null
+    }
+    if (markerObj.infoWindow) {
+      markerObj.infoWindow.close()
+    }
+  })
   markerInstances = []
 }
 

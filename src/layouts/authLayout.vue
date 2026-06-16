@@ -20,14 +20,9 @@
           <!-- Brand Badge -->
           <div
             class="flex items-center gap-3 mx-auto mb-4 sm:mb-5 w-fit px-3.5 py-2.5 border border-slate-400/20 rounded-2xl bg-white/80 backdrop-blur-md shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-            <div
-              class="w-10 h-10 rounded-xl grid place-items-center text-blue-600 bg-blue-600/10 border border-blue-600/20">
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                <polyline points="9 22 9 12 15 12 15 22" />
-              </svg>
-            </div>
+            <q-avatar class="">
+              <q-img src="/app.png" alt="Logo" class="" />
+            </q-avatar>
             <div>
               <div class="text-subtitle1 text-weight-bold text-slate-800 leading-tight">TakeLog</div>
               <div class="text-caption text-slate-500">Espace de connexion</div>

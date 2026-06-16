@@ -23,7 +23,7 @@ const authStore = useAuthStore()
 onMounted(async () => {
   const isValidSession = await authStore.fetchProfile()
   if (!isValidSession || authStore.user?.role !== 'admin') {
-    router.replace('/home')
+    router.replace('/')
   }
 })
 </script>

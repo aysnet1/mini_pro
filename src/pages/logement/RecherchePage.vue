@@ -1,26 +1,131 @@
 <template>
   <q-page class="search-page">
     <div class="search-topbar">
+      <!-- Row 1: search bar + actions -->
+      <div class="topbar-row1">
+        <div class="search-bar-wrap">
+          <q-icon name="search" class="search-bar-icon" />
+          <input v-model="filters.q" type="text" placeholder="Type, ville, adresse…" class="search-bar-input"
+            @keyup.enter="fetchLogements" />
+          <button v-if="filters.q" class="search-bar-clear" @click="filters.q = ''; fetchLogements()">✕</button>
+        </div>
+        <div class="topbar-actions">
+          <q-btn v-if="hasActiveFilters" no-caps flat color="dark" icon="restart_alt" class="reset-filters-btn"
+            @click="clearFilters" />
+          <q-btn no-caps flat icon="tune" :label="hasActiveFilters ? 'Filtres ●' : 'Filtres'" class="filter-sheet-btn"
+            :class="{ 'filter-sheet-btn--active': hasActiveFilters }" @click="showFilters = true" />
 
-      <div class="top-filters">
-        <q-select v-model="filters.ville" :options="villeOptions" dense borderless clearable emit-value map-options
-          use-input fill-input hide-selected input-debounce="0" placeholder="Ville" class="filter-input"
-          @filter="filterVilleOptions" />
-        <q-input v-model="filters.universite" dense borderless placeholder="Université" class="filter-input" />
-        <q-input v-model.number="filters.budget_max" dense borderless type="number" placeholder="Budget max"
-          class="filter-input" />
-        <q-select v-model="filters.type" :options="typeOptions" dense borderless emit-value map-options clearable
-          placeholder="Type" class="filter-input" />
-        <q-btn v-if="hasActiveFilters" no-caps flat color="dark" icon="restart_alt" label="Réinitialiser"
-          class="reset-filters-btn" @click="clearFilters" />
-        <q-btn no-caps round color="negative" icon="search" @click="fetchLogements" :loading="loading" />
+        </div>
       </div>
+
+      <!-- Row 2: horizontal scrollable filters -->
+      <div class="filters-scroll-row">
+        <q-select v-model="filters.ville" :options="villeOptions" dense borderless clearable emit-value map-options
+          use-input fill-input hide-selected input-debounce="0" placeholder="Ville" class="filter-chip"
+          @filter="filterVilleOptions" />
+
+        <q-select v-model="filters.types" :options="typeOptions" dense borderless clearable emit-value map-options
+          multiple use-chips placeholder="Type" class="filter-chip filter-chip--wide" />
+
+        <q-input v-model.number="filters.budget_min" dense borderless type="number" placeholder="Budget min"
+          class="filter-chip filter-chip--num" />
+
+        <q-input v-model.number="filters.budget_max" dense borderless type="number" placeholder="Budget max"
+          class="filter-chip filter-chip--num" />
+
+        <q-select v-model="filters.nb_places_min" :options="placesOptions" dense borderless clearable emit-value
+          map-options placeholder="Places min" class="filter-chip" />
+
+        <q-input v-model="filters.universite" dense borderless placeholder="Université"
+          class="filter-chip filter-chip--wide" />
+      </div>
+
+      <!-- Mobile tab switcher (inside topbar so --topbar-h includes it) -->
+      <q-tabs v-model="activeTab" class="mobile-tabs md:hidden!" dense no-caps align="justify" active-color="negative"
+        indicator-color="negative">
+        <q-tab name="liste" icon="list" label="Liste" />
+        <q-tab name="carte" icon="map" label="Carte" />
+      </q-tabs>
+    </div>
+    <q-dialog v-model="showFilters" position="bottom" :full-width="true">
+      <q-card class="filter-dialog-card">
+        <div class="sheet-handle" />
+
+        <q-card-section class="sheet-header q-pa-none">
+          <span class="sheet-title">Filtres de recherche</span>
+          <q-btn flat round dense icon="close" color="grey-7" v-close-popup />
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-section class="sheet-body q-pa-none">
+          <!-- Recherche libre -->
+          <div class="sheet-field-label">Recherche libre</div>
+          <div class="sheet-search-bar">
+            <q-icon name="search" size="18px" color="grey-5" />
+            <input v-model="filters.q" type="text" placeholder="Type, ville, adresse…" class="sheet-search-input"
+              @keyup.enter="applyFiltersFromSheet" />
+            <button v-if="filters.q" class="sheet-clear" @click="filters.q = ''">✕</button>
+          </div>
+
+          <!-- Ville -->
+          <div class="sheet-field-label">Ville</div>
+          <q-select v-model="filters.ville" :options="villeOptions" dense outlined clearable emit-value map-options
+            use-input fill-input hide-selected input-debounce="0" placeholder="Sélectionner une ville"
+            class="sheet-field" @filter="filterVilleOptions" />
+
+          <!-- Type -->
+          <div class="sheet-field-label">Type de logement</div>
+          <q-select v-model="filters.types" :options="typeOptions" dense outlined clearable emit-value map-options
+            multiple use-chips placeholder="Tous les types" class="sheet-field" />
+
+          <!-- Budget -->
+          <div class="sheet-field-label">Budget (DT / mois)</div>
+          <div class="sheet-row">
+            <q-input v-model.number="filters.budget_min" dense outlined type="number" placeholder="Min"
+              class="sheet-field sheet-field--half" />
+            <q-input v-model.number="filters.budget_max" dense outlined type="number" placeholder="Max"
+              class="sheet-field sheet-field--half" />
+          </div>
+
+          <!-- Places -->
+          <div class="sheet-field-label">Nombre de places minimum</div>
+          <q-select v-model="filters.nb_places_min" :options="placesOptions" dense outlined clearable emit-value
+            map-options placeholder="Indifférent" class="sheet-field" />
+
+          <!-- Université -->
+          <div class="sheet-field-label">Université à proximité</div>
+          <q-input v-model="filters.universite" dense outlined placeholder="Nom de l'université" class="sheet-field" />
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions class="sheet-footer">
+          <q-btn no-caps flat color="grey-7" label="Réinitialiser" class="sheet-reset-btn" @click="clearFiltersSheet" />
+          <q-btn no-caps unelevated color="negative" label="Voir les résultats" class="sheet-apply-btn"
+            :loading="loading" @click="applyFiltersFromSheet" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Mobile map panel: shown only when carte tab is active on mobile -->
+    <div class="mobile-map-panel md:hidden!" v-show="activeTab === 'carte'">
+      <GoogleMapCanvas api-key="AIzaSyD0yI8RiNp5uxgZD7OasrMrDCcKLaGq0hA" :markers="mapMarkers"
+        :active-marker-id="activeListingId" :fit-to-markers="true" :max-auto-zoom="9" :center="mapCenter" :zoom="9"
+        :height="mobileMapHeight" @marker-click="handleMarkerClick" />
     </div>
 
+    <!-- Desktop split: list always visible, map always visible -->
     <div class="split-layout">
-      <section class="list-side">
+      <section class="list-side" :class="activeTab === 'carte' ? 'hidden! md:block!' : ''">
         <div class="list-head">
-          <h5 class="q-my-none">{{ logements.length }} logements trouvés</h5>
+          <h5 class="q-my-none">
+            {{ pagination.total }} logement{{ pagination.total !== 1 ? 's' : '' }} trouvé{{ pagination.total !== 1 ? 's'
+              : '' }}
+            <span v-if="pagination.totalPages > 1" class="text-caption text-grey-7">
+              (page {{ pagination.page }}/{{ pagination.totalPages }})
+            </span>
+          </h5>
           <span class="text-caption text-grey-7">Résultats sur la carte Google Maps</span>
         </div>
 
@@ -44,25 +149,83 @@
 
         <div v-else class="cards-grid">
           <router-link v-for="logement in logements" :key="logement.id" :to="`/logements/${logement.id}`"
-            class="card-link">
-            <article class="listing-card" :class="{ active: String(activeListingId) === String(logement.id) }"
-              @mouseenter="activeListingId = logement.id">
-              <div class="listing-media" :style="{ backgroundImage: `url('${getPrimaryImage(logement)}')` }">
-                <span class="price-chip">{{ formatPrice(logement.prix) }}</span>
+            class="block no-underline">
+            <article
+              class="listing-card group flex flex-col max-sm:flex-row bg-white rounded-2xl border border-slate-200 overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl hover:border-slate-300 max-sm:min-h-24 max-sm:hover:translate-y-0"
+              :class="{ 'ring-2 ring-slate-300 shadow-lg -translate-y-0.5': String(activeListingId) === String(logement.id) }"
+              @mouseenter="activeListingId = logement.id" @touchstart="activeListingId = logement.id">
+              <!-- Media -->
+              <div
+                class="card-media relative h-40 max-sm:h-auto max-sm:w-28 max-sm:min-w-28 max-sm:shrink-0 bg-slate-100 bg-cover bg-center shrink-0 max-sm:rounded-none max-sm:rounded-l-2xl"
+                :style="{ backgroundImage: `url('${getPrimaryImage(logement)}')` }">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                <span
+                  class="absolute left-2.5 bottom-2.5 bg-white/95 backdrop-blur-sm text-slate-900 text-xs font-bold px-2.5 py-1 rounded-full shadow-sm max-sm:text-[0.65rem] max-sm:px-2 max-sm:py-0.5">
+                  {{ formatPrice(logement.prix) }}
+                </span>
+                <span v-if="logement.match_universite"
+                  class="absolute right-2.5 bottom-2.5 bg-teal-700 text-white text-[0.65rem] font-bold px-2 py-0.5 rounded-full">
+                  🎓 Univ.
+                </span>
               </div>
-              <div class="listing-body">
-                <p class="listing-title">{{ capitalize(logement.type) }} · {{ logement.ville }}</p>
-                <p class="listing-subtitle">{{ logement.adress }}</p>
-                <p v-if="logement.match_universite" class="listing-badge">Adapté à votre université</p>
-                <p class="listing-meta">{{ logement.nb_places || 1 }} place(s) · {{ logement.statut || 'disponible' }}
+
+              <!-- Body -->
+              <div class="flex flex-col gap-1 p-2.5 max-sm:justify-center max-sm:flex-1 max-sm:min-w-0">
+                <p class="m-0 text-sm font-bold text-slate-900 truncate leading-snug max-sm:text-xs">
+                  {{ capitalize(logement.type) }} · {{ logement.ville }}
                 </p>
+                <p class="m-0 text-xs text-slate-500 truncate max-sm:text-[0.72rem]">
+                  {{ logement.adress }}
+                </p>
+                <div class="flex flex-wrap gap-1 mt-0.5">
+                  <span v-if="logement.nb_places"
+                    class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.68rem] font-semibold bg-slate-100 text-slate-500 border border-slate-200">
+                    {{ logement.nb_places }} pl.
+                  </span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[0.68rem] font-semibold border"
+                    :class="logement.statut === 'disponible'
+                      ? 'bg-cyan-50 text-teal-700 border-teal-200'
+                      : 'bg-slate-50 text-slate-400 border-slate-200'">
+                    {{ logement.statut || 'dispo' }}
+                  </span>
+                </div>
+                <div v-if="equipmentPreview(logement).length" class="equip-row flex flex-wrap gap-1 mt-0.5">
+                  <span v-for="eq in equipmentPreview(logement)" :key="eq"
+                    class="text-[0.65rem] text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5">{{
+                      eq }}</span>
+                </div>
               </div>
             </article>
           </router-link>
         </div>
+
+        <!-- Pagination Controls -->
+        <div v-if="pagination.totalPages > 1" class="pagination-controls q-mt-lg">
+          <div class="pagination-info">
+            Page {{ pagination.page }} sur {{ pagination.totalPages }} ({{ pagination.total }} résultats)
+          </div>
+          <div class="pagination-buttons">
+            <q-btn flat color="dark" icon="first_page" :disable="!pagination.hasPrev" @click="changePage(1)"
+              class="pagination-btn" />
+            <q-btn flat color="dark" icon="chevron_left" :disable="!pagination.hasPrev"
+              @click="changePage(pagination.page - 1)" class="pagination-btn" />
+            <div class="pagination-pages">
+              <template v-for="pageNum in visiblePages" :key="pageNum">
+                <q-btn v-if="pageNum === pagination.page" unelevated color="negative" :label="pageNum"
+                  class="pagination-page pagination-page--active" />
+                <q-btn v-else flat color="dark" :label="pageNum" @click="changePage(pageNum)" class="pagination-page" />
+              </template>
+            </div>
+            <q-btn flat color="dark" icon="chevron_right" :disable="!pagination.hasNext"
+              @click="changePage(pagination.page + 1)" class="pagination-btn" />
+            <q-btn flat color="dark" icon="last_page" :disable="!pagination.hasNext"
+              @click="changePage(pagination.totalPages)" class="pagination-btn" />
+          </div>
+        </div>
       </section>
 
-      <aside class="map-side">
+      <!-- Desktop map: always visible on md+, hidden on mobile via Tailwind -->
+      <aside class="map-side hidden! md:block!">
         <GoogleMapCanvas api-key="AIzaSyD0yI8RiNp5uxgZD7OasrMrDCcKLaGq0hA" :markers="mapMarkers"
           :active-marker-id="activeListingId" :fit-to-markers="true" :max-auto-zoom="9" :center="mapCenter" :zoom="9"
           height="calc(100vh - 160px)" @marker-click="handleMarkerClick" />
@@ -72,39 +235,62 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import GoogleMapCanvas from '@/components/maps/GoogleMapCanvas.vue'
-import { useAuthStore } from '@/stores/auth'
 import { tunisianVilles } from '@/helpers/tunisiaCities'
 
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const logements = ref([])
-const activeListingId = ref(null)
-const authStore = useAuthStore()
-const searchContext = ref({
-  filtreVille: null,
-  universite: null,
-  message: ''
+const pagination = ref({
+  page: 1,
+  limit: 12,
+  total: 0,
+  totalPages: 0,
+  hasNext: false,
+  hasPrev: false
 })
+const activeListingId = ref(null)
+const searchContext = ref({ filtreVille: null, universite: null, message: '' })
+const activeTab = ref('liste')
+const showFilters = ref(false)
+const topbarHeight = ref(80)
+
+const mobileMapHeight = computed(() => `calc(100vh - ${topbarHeight.value}px)`)
 
 const filters = ref({
+  q: '',
   ville: null,
-  universite: '',
+  types: [],
+  budget_min: null,
   budget_max: null,
-  type: null
+  nb_places_min: null,
+  universite: '',
+  adress: ''
 })
 
-const baseVilleOptions = tunisianVilles.map((ville) => ({
-  label: ville,
-  value: ville
-}))
-
+const baseVilleOptions = tunisianVilles.map(v => ({ label: v, value: v }))
 const villeOptions = ref(baseVilleOptions)
 
 const typeOptions = [
   { label: 'Studio', value: 'studio' },
+  { label: 'S+1', value: 's+1' },
+  { label: 'S+2', value: 's+2' },
+  { label: 'S+3', value: 's+3' },
+  { label: 'S+4', value: 's+4' },
+  { label: 'Chambre', value: 'chambre' },
+  { label: 'Colocation', value: 'colocation' },
   { label: 'Appartement', value: 'appartement' },
   { label: 'Maison', value: 'maison' }
+]
+
+const placesOptions = [
+  { label: '1+', value: 1 },
+  { label: '2+', value: 2 },
+  { label: '3+', value: 3 },
+  { label: '4+', value: 4 }
 ]
 
 const mapMarkers = computed(() => {
@@ -138,37 +324,73 @@ const displayedContext = computed(() => {
   }
 })
 
-const hasActiveFilters = computed(() => {
-  return Boolean(
+const hasActiveFilters = computed(() =>
+  Boolean(
+    filters.value.q?.trim() ||
     filters.value.ville ||
-    filters.value.universite?.trim() ||
+    filters.value.types?.length ||
+    filters.value.budget_min ||
     filters.value.budget_max ||
-    filters.value.type
+    filters.value.nb_places_min ||
+    filters.value.universite?.trim() ||
+    filters.value.adress?.trim()
   )
+)
+
+const visiblePages = computed(() => {
+  const current = pagination.value.page
+  const total = pagination.value.totalPages
+  const delta = 2 // Number of pages to show on each side of current page
+
+  const range = []
+  for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
+    range.push(i)
+  }
+
+  // Always include first page
+  if (current - delta > 2) {
+    range.unshift(1)
+  }
+
+  // Always include last page
+  if (current + delta < total - 1) {
+    range.push(total)
+  }
+
+  range.sort((a, b) => a - b)
+
+  // Remove duplicates
+  return [...new Set(range)]
 })
 
 function filterVilleOptions(val, update) {
   update(() => {
     const needle = (val || '').trim().toLowerCase()
-    if (!needle) {
-      villeOptions.value = baseVilleOptions
-      return
-    }
-
-    villeOptions.value = baseVilleOptions.filter((option) =>
-      option.label.toLowerCase().includes(needle)
-    )
+    villeOptions.value = needle
+      ? baseVilleOptions.filter(o => o.label.toLowerCase().includes(needle))
+      : baseVilleOptions
   })
 }
 
 function clearFilters() {
-  filters.value = {
-    ville: null,
-    universite: '',
-    budget_max: null,
-    type: null
-  }
+  filters.value = { q: '', ville: null, types: [], budget_min: null, budget_max: null, nb_places_min: null, universite: '', adress: '' }
+  router.replace({ query: {} })
   fetchLogements()
+}
+
+function clearFiltersSheet() {
+  filters.value = { q: '', ville: null, types: [], budget_min: null, budget_max: null, nb_places_min: null, universite: '', adress: '' }
+  router.replace({ query: {} })
+}
+
+function applyFiltersFromSheet() {
+  showFilters.value = false
+  fetchLogements()
+}
+
+function equipmentPreview(logement) {
+  if (!Array.isArray(logement.equipemens)) return []
+  return logement.equipemens.filter(Boolean).slice(0, 3)
 }
 
 function getPrimaryImage(logement) {
@@ -234,252 +456,121 @@ async function fetchLogements() {
   loading.value = true
   try {
     const params = new URLSearchParams()
+
+    const q = filters.value.q?.trim()
+    if (q) params.append('q', q)
+
     if (filters.value.ville) params.append('ville', filters.value.ville)
-    else params.append('all_villes', '1')
-    if (filters.value.universite) params.append('universite', filters.value.universite)
+    else if (!q) params.append('all_villes', '1')
+
+    if (filters.value.types?.length) params.append('types', filters.value.types.join(','))
+    if (filters.value.budget_min) params.append('budget_min', String(filters.value.budget_min))
     if (filters.value.budget_max) params.append('budget_max', String(filters.value.budget_max))
-    if (filters.value.type) params.append('type', filters.value.type)
+    if (filters.value.nb_places_min) params.append('nb_places_min', String(filters.value.nb_places_min))
+    if (filters.value.universite?.trim()) params.append('universite', filters.value.universite.trim())
+    if (filters.value.adress?.trim()) params.append('adress', filters.value.adress.trim())
 
-    const url = params.toString() ? `/api/logements?${params.toString()}` : '/api/logements'
-    const response = await fetch(url, {
-      headers: {
-        ...authStore.authHeader
-      }
-    })
+    // Add pagination params
+    params.append('page', String(pagination.value.page))
+    params.append('limit', String(pagination.value.limit))
+
+    const response = await fetch(`/api/logements?${params.toString()}`)
     const data = await response.json()
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Erreur lors de la recherche de logements.')
-    }
+    if (!response.ok) throw new Error(data.error || 'Erreur lors de la recherche.')
 
     logements.value = Array.isArray(data.logements) ? data.logements : []
-    searchContext.value = data.contexte || {
-      filtreVille: null,
-      universite: null,
-      message: ''
+    if (data.pagination) {
+      pagination.value = data.pagination
     }
+    searchContext.value = data.contexte || { filtreVille: null, universite: null, message: '' }
     activeListingId.value = logements.value[0]?.id || null
   } catch (err) {
     console.error(err)
     logements.value = []
     activeListingId.value = null
-    searchContext.value = {
-      filtreVille: null,
-      universite: null,
-      message: 'Impossible de charger les logements.'
-    }
+    searchContext.value = { filtreVille: null, universite: null, message: 'Impossible de charger les logements.' }
   } finally {
     loading.value = false
   }
 }
 
-onMounted(fetchLogements)
+function changePage(page) {
+  if (page < 1 || page > pagination.value.totalPages || page === pagination.value.page) return
+  pagination.value.page = page
+
+  // Update URL with new page
+  const query = { ...route.query, page: String(page) }
+  if (page === 1) delete query.page // Remove page param if it's page 1
+
+  router.push({ query })
+  // Scroll to top of list
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function applyRouteQuery() {
+  const rq = route.query
+  if (rq.q) filters.value.q = String(rq.q)
+  if (rq.ville) filters.value.ville = String(rq.ville)
+  if (rq.type) filters.value.types = [String(rq.type)]
+  if (rq.types) filters.value.types = String(rq.types).split(',').map(t => t.trim()).filter(Boolean)
+  if (rq.budget_min) filters.value.budget_min = Number(rq.budget_min)
+  if (rq.budget_max) filters.value.budget_max = Number(rq.budget_max)
+  if (rq.nb_places_min) filters.value.nb_places_min = Number(rq.nb_places_min)
+  if (rq.universite) filters.value.universite = String(rq.universite)
+  if (rq.adress) filters.value.adress = String(rq.adress)
+  if (rq.page) pagination.value.page = Number(rq.page)
+}
+
+watch(() => route.query, () => {
+  applyRouteQuery()
+  fetchLogements()
+}, { deep: true })
+
+// Auto-fetch when filters change
+watch(
+  filters,
+  () => {
+    // Reset to first page when filters change
+    pagination.value.page = 1
+
+    // Update URL query params without triggering another fetch
+    const query = {}
+    if (filters.value.q) query.q = filters.value.q
+    if (filters.value.ville) query.ville = filters.value.ville
+    if (filters.value.types?.length) query.types = filters.value.types.join(',')
+    if (filters.value.budget_min) query.budget_min = String(filters.value.budget_min)
+    if (filters.value.budget_max) query.budget_max = String(filters.value.budget_max)
+    if (filters.value.nb_places_min) query.nb_places_min = String(filters.value.nb_places_min)
+    if (filters.value.universite) query.universite = filters.value.universite
+    if (filters.value.adress) query.adress = filters.value.adress
+    if (pagination.value.page > 1) query.page = String(pagination.value.page)
+
+    router.replace({ query })
+    fetchLogements()
+  },
+  { deep: true }
+)
+
+let topbarObserver = null
+
+onMounted(() => {
+  applyRouteQuery()
+  fetchLogements()
+  nextTick(() => {
+    const topbar = document.querySelector('.search-topbar')
+    if (topbar) {
+      topbarHeight.value = topbar.offsetHeight
+      document.documentElement.style.setProperty('--topbar-h', `${topbar.offsetHeight}px`)
+      topbarObserver = new ResizeObserver(() => {
+        topbarHeight.value = topbar.offsetHeight
+        document.documentElement.style.setProperty('--topbar-h', `${topbar.offsetHeight}px`)
+      })
+      topbarObserver.observe(topbar)
+    }
+  })
+})
+
+onUnmounted(() => {
+  topbarObserver?.disconnect()
+})
 </script>
-
-<style scoped>
-.search-page {
-  padding: 0;
-  background: #f8f8f8;
-}
-
-.search-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: #ffffff;
-  border-bottom: 1px solid #ececec;
-  padding: 10px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.top-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  font-weight: 600;
-  background: #fff;
-}
-
-.top-filters {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.filter-input {
-  min-width: 160px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  padding: 0 10px;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.filter-input:focus-within {
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
-}
-
-.reset-filters-btn {
-  border: 1px solid #e5e7eb;
-  border-radius: 999px;
-  background: #fff;
-}
-
-.split-layout {
-  display: grid;
-  grid-template-columns: 52% 48%;
-  min-height: calc(100vh - 74px);
-}
-
-.list-side {
-  padding: 16px;
-  overflow-y: auto;
-}
-
-.map-side {
-  position: sticky;
-  top: 74px;
-  align-self: start;
-  padding: 12px;
-}
-
-.list-head {
-  margin-bottom: 12px;
-}
-
-.search-context {
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.context-message {
-  margin: 0;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.context-meta {
-  margin: 4px 0 0;
-  font-size: 0.82rem;
-  color: #64748b;
-}
-
-.cards-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.card-link {
-  text-decoration: none;
-}
-
-.listing-card {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 14px;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.listing-card.active {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
-  border-color: #cbd5e1;
-}
-
-.listing-media {
-  height: 172px;
-  background-size: cover;
-  background-position: center;
-  position: relative;
-}
-
-.price-chip {
-  position: absolute;
-  left: 10px;
-  bottom: 10px;
-  background: #ffffff;
-  color: #111827;
-  border-radius: 999px;
-  padding: 4px 10px;
-  font-size: 0.77rem;
-  font-weight: 700;
-}
-
-.listing-body {
-  padding: 10px;
-}
-
-.listing-title {
-  margin: 0;
-  font-size: 0.96rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.listing-subtitle,
-.listing-meta {
-  margin: 4px 0 0;
-  color: #64748b;
-  font-size: 0.84rem;
-}
-
-.listing-badge {
-  margin: 6px 0 0;
-  display: inline-flex;
-  background: #ecfeff;
-  color: #0f766e;
-  border: 1px solid #99f6e4;
-  border-radius: 999px;
-  padding: 3px 8px;
-  font-size: 0.74rem;
-  font-weight: 700;
-}
-
-.list-loading,
-.list-empty {
-  min-height: 40vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #64748b;
-}
-
-@media (max-width: 1140px) {
-  .split-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .map-side {
-    position: relative;
-    top: 0;
-    order: -1;
-  }
-
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .search-topbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .top-filters {
-    width: 100%;
-    flex-wrap: wrap;
-  }
-}
-</style>

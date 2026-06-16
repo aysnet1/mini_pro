@@ -134,6 +134,93 @@
         </q-card>
       </transition>
 
+      <!-- Search and Filters Section -->
+      <q-card flat class="search-card" v-if="user && user.role === 'proprietaire'">
+        <q-card-section class="search-section">
+          <div class="search-row">
+            <q-input
+              v-model="searchQuery"
+              outlined
+              dense
+              placeholder="Rechercher par adresse, ville ou description..."
+              color="black"
+              class="search-input"
+              clearable
+              @update:model-value="onSearchChange"
+            >
+              <template v-slot:prepend>
+                <q-icon name="search" color="black" />
+              </template>
+            </q-input>
+
+            <q-btn
+              v-if="hasActiveFilters"
+              flat
+              no-caps
+              color="black"
+              icon="filter_alt_off"
+              label="Réinitialiser"
+              @click="resetFilters"
+              class="btn-reset-filters"
+            />
+          </div>
+
+          <div class="filters-row">
+            <q-select
+              v-model="filterType"
+              :options="typeFilterOptionsWithAll"
+              outlined
+              dense
+              placeholder="Type"
+              color="black"
+              emit-value
+              map-options
+              clearable
+              class="filter-select filter-dense"
+              @update:model-value="onFilterChange"
+            />
+
+            <q-select
+              v-model="filterStatut"
+              :options="statutFilterOptionsWithAll"
+              outlined
+              dense
+              placeholder="Statut"
+              color="black"
+              emit-value
+              map-options
+              clearable
+              class="filter-select filter-dense"
+              @update:model-value="onFilterChange"
+            />
+
+            <q-input
+              v-model.number="filterPrixMin"
+              type="number"
+              outlined
+              dense
+              placeholder="Prix min"
+              color="black"
+              class="filter-input filter-dense"
+              clearable
+              @update:model-value="onFilterChange"
+            />
+
+            <q-input
+              v-model.number="filterPrixMax"
+              type="number"
+              outlined
+              dense
+              placeholder="Prix max"
+              color="black"
+              class="filter-input filter-dense"
+              clearable
+              @update:model-value="onFilterChange"
+            />
+          </div>
+        </q-card-section>
+      </q-card>
+
 
 
       <section class="logements-section">
@@ -151,70 +238,184 @@
           <p class="empty-subtitle">Commencez par publier votre premier logement ci-dessus.</p>
         </div>
 
-        <div v-else class="logements-grid">
-          <router-link v-for="item in ownerLogements" :key="item.id" :to="`/logements/${item.id}`" class="card-link">
-            <q-card flat class="logement-card">
-              <div class="logement-photos">
-                <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
-                  navigation arrows navigation-icon="circle" control-color="white" height="200px"
-                  class="logement-carousel">
-                  <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx"
-                    class="carousel-slide">
-                    <img :src="photo" class="carousel-img" />
-                    <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
-                      @click.stop="deletePhoto(item.id, photo)">
-                      <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
-                    </q-btn>
-                  </q-carousel-slide>
-                </q-carousel>
+        <div v-else>
+          <div class="logements-grid">
+            <div v-for="item in ownerLogements" :key="item.id" class="card-wrapper">
+              <router-link :to="`/logements/${item.id}`" class="card-link">
+              <q-card flat class="logement-card">
+                <div class="logement-photos">
+                  <q-carousel v-if="getPhotos(item).length > 0" v-model="carouselSlides[item.id]" animated swipeable
+                    navigation arrows navigation-icon="circle" control-color="white" height="200px"
+                    class="logement-carousel">
+                    <q-carousel-slide v-for="(photo, idx) in getPhotos(item)" :key="idx" :name="idx"
+                      class="carousel-slide">
+                      <img :src="photo" class="carousel-img" />
+                      <q-btn round flat size="xs" icon="delete" color="white" class="carousel-delete-btn"
+                        @click.stop="deletePhoto(item.id, photo)">
+                        <q-tooltip class="bg-black text-white">Supprimer cette photo</q-tooltip>
+                      </q-btn>
+                    </q-carousel-slide>
+                  </q-carousel>
 
-                <div v-else class="no-photo-placeholder">
-                  <q-icon name="image" size="48px" color="grey-5" />
-                  <span>Aucune photo</span>
+                  <div v-else class="no-photo-placeholder">
+                    <q-icon name="image" size="48px" color="grey-5" />
+                    <span>Aucune photo</span>
+                  </div>
+
+                  <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
+                    size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
+                    <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
+                      restantes)</q-tooltip>
+                  </q-btn>
                 </div>
 
-                <q-btn v-if="getPhotos(item).length < 5" round color="white" text-color="black" icon="add_a_photo"
-                  size="sm" class="upload-btn-overlay" @click.stop="triggerUpload(item.id)">
-                  <q-tooltip class="bg-black text-white">Ajouter des photos ({{ 5 - getPhotos(item).length }}
-                    restantes)</q-tooltip>
-                </q-btn>
-              </div>
+                <q-card-section class="logement-card-body">
+                  <div class="logement-meta">
+                    <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
+                      :label="item.statut || 'disponible'" />
+                    <span class="logement-type-badge">{{ item.type }}</span>
+                  </div>
+                  <h3 class="logement-title">{{ item.adress }}</h3>
+                  <div class="logement-details">
+                    <div class="detail-item">
+                      <q-icon name="location_city" size="16px" />
+                      <span>{{ item.ville }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <q-icon name="payments" size="16px" />
+                      <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
+                    </div>
+                    <div v-if="item.nb_places" class="detail-item">
+                      <q-icon name="group" size="16px" />
+                      <span>{{ item.nb_places }} place(s)</span>
+                    </div>
+                  </div>
+                </q-card-section>
+              </q-card>
+            </router-link>
 
-              <q-card-section class="logement-card-body">
-                <div class="logement-meta">
-                  <q-badge :color="item.statut === 'disponible' ? 'black' : 'grey-7'" text-color="white"
-                    :label="item.statut || 'disponible'" />
-                  <span class="logement-type-badge">{{ item.type }}</span>
-                </div>
-                <h3 class="logement-title">{{ item.adress }}</h3>
-                <div class="logement-details">
-                  <div class="detail-item">
-                    <q-icon name="location_city" size="16px" />
-                    <span>{{ item.ville }}</span>
-                  </div>
-                  <div class="detail-item">
-                    <q-icon name="payments" size="16px" />
-                    <span class="price-value">{{ item.prix }} DT<small>/mois</small></span>
-                  </div>
-                  <div v-if="item.nb_places" class="detail-item">
-                    <q-icon name="group" size="16px" />
-                    <span>{{ item.nb_places }} place(s)</span>
-                  </div>
-                </div>
-              </q-card-section>
-            </q-card>
-          </router-link>
+            <div class="card-actions">
+              <q-btn round flat size="sm" icon="edit" color="black" @click="openEditDialog(item)">
+                <q-tooltip>Modifier le logement</q-tooltip>
+              </q-btn>
+              <q-btn round flat size="sm" icon="delete" color="red" @click="confirmDelete(item)">
+                <q-tooltip>Supprimer le logement</q-tooltip>
+              </q-btn>
+            </div>
+          </div>
+          </div>
+
+          <!-- Load More Button -->
+          <div v-if="hasMoreLogements" class="load-more-container">
+            <q-btn
+              no-caps
+              unelevated
+              color="black"
+              text-color="white"
+              icon="refresh"
+              label="Charger plus de logements"
+              :loading="loadingMore"
+              @click="loadMoreLogements"
+              class="btn-load-more"
+            />
+            <p class="pagination-info">
+              {{ ownerLogements.length }} sur {{ pagination.total }} logement(s)
+            </p>
+          </div>
         </div>
       </section>
 
       <input ref="existingFileInput" type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif"
         style="display: none" @change="handleExistingFileUpload" />
+
+      <!-- Edit Dialog -->
+      <q-dialog v-model="editDialogOpen" persistent>
+        <q-card class="edit-dialog-card" style="min-width: 600px; max-width: 900px;">
+          <q-card-section class="row items-center q-pb-none">
+            <div class="text-h6">Modifier le logement</div>
+            <q-space />
+            <q-btn icon="close" flat round dense v-close-popup />
+          </q-card-section>
+
+          <q-card-section>
+            <q-form class="logement-form" @submit.prevent="updateLogement">
+              <LogementLocationFields :adress="editForm.adress" :ville="editForm.ville"
+                :filtered-ville-options="filteredVilleOptions" :filtered-adress-options="filteredAdressOptions"
+                :geocode-loading="geocodeLoading" :adress-suggest-loading="adressSuggestLoading"
+                :geocode-error="geocodeError" :required-rule="requiredRule"
+                @update:adress="(val) => { editForm.adress = val }" @update:ville="(val) => { editForm.ville = val }"
+                @filter-villes="filterVilles" @filter-adresses="filterAdresses" />
+
+              <div class="form-grid cols-3">
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="home_work" size="16px" />
+                    Type
+                  </label>
+                  <q-select v-model="editForm.type" :options="typeOptions" placeholder="Choisir..." outlined dense
+                    emit-value map-options color="black" :rules="[requiredRule]" class="input-modern" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="payments" size="16px" />
+                    Prix mensuel (DT)
+                  </label>
+                  <q-input v-model.number="editForm.prix" type="number" placeholder="350" outlined dense color="black"
+                    :rules="[requiredRule]" class="input-modern" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="group" size="16px" />
+                    Nombre de places
+                  </label>
+                  <q-input v-model.number="editForm.nb_places" type="number" placeholder="2" outlined dense
+                    color="black" class="input-modern" />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <q-icon name="description" size="16px" />
+                  Description
+                </label>
+                <q-input v-model="editForm.description" type="textarea" :rows="3"
+                  placeholder="Décrivez votre logement: équipements, ambiance, proximité..." outlined dense
+                  color="black" class="input-modern" />
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">
+                  <q-icon name="map" size="16px" />
+                  Position sur la carte
+                </label>
+                <div class="map-position-banner" :class="{ 'has-position': editSelectedPosition }">
+                  <q-icon :name="editSelectedPosition ? 'check_circle' : 'touch_app'" size="20px" />
+                  <span>{{ editPositionText }}</span>
+                </div>
+              </div>
+              <q-card flat class="map-card">
+                <q-card-section class="map-card-header">
+                  <q-icon name="explore" size="24px" color="black" />
+                  <span class="map-card-title">Carte — Cliquez pour positionner votre logement</span>
+                </q-card-section>
+                <GoogleMapCanvas :markers="ownerMarkers" :center="editMapCenter" :zoom="12" :selectable="true"
+                  :selected-position="editSelectedPosition" height="420px" @map-click="handleEditMapClick" />
+              </q-card>
+
+              <div class="form-actions">
+                <q-btn type="submit" no-caps unelevated color="black" text-color="white" icon="save"
+                  label="Enregistrer les modifications" :loading="saving" class="btn-submit" />
+              </div>
+            </q-form>
+          </q-card-section>
+        </q-card>
+      </q-dialog>
     </div>
   </q-page>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
@@ -223,6 +424,7 @@ import GoogleMapCanvas from '@/components/maps/GoogleMapCanvas.vue'
 import LogementLocationFields from '@/components/logements/LogementLocationFields.vue'
 import { useAddressGeocoding } from '@/composables/useAddressGeocoding'
 import { useLogementsStore } from '@/stores/logements'
+import { useLogementsFilters } from '@/composables/useLogementsFilters'
 
 const $q = useQuasar()
 const router = useRouter()
@@ -230,12 +432,51 @@ const authStore = useAuthStore()
 const logementsStore = useLogementsStore()
 const { user } = storeToRefs(authStore)
 
+// Use filters composable
+const {
+  searchQuery,
+  filterType,
+  filterStatut,
+  filterPrixMin,
+  filterPrixMax,
+  typeFilterOptionsWithAll,
+  statutFilterOptionsWithAll,
+  hasActiveFilters,
+  pagination,
+  hasMoreLogements,
+  loadingMore,
+  onSearchChange,
+  onFilterChange,
+  resetFilters,
+  loadMoreLogements,
+  dispose
+} = useLogementsFilters()
+
+// Cleanup on unmount
+onUnmounted(() => {
+  dispose()
+})
+
 const saving = computed(() => logementsStore.saving)
 const showForm = ref(false)
 const isDragging = ref(false)
 const pendingPhotos = ref([])
 const uploadTargetId = ref(null)
 const carouselSlides = reactive({})
+
+// Form state
+const editDialogOpen = ref(false)
+const editingLogementId = ref(null)
+const editForm = ref({
+  adress: '',
+  ville: '',
+  type: null,
+  prix: null,
+  nb_places: null,
+  description: '',
+  latitude: null,
+  longitude: null
+})
 
 const form = ref({
   adress: '',
@@ -268,7 +509,6 @@ const typeOptions = [
 const requiredRule = (val) => !!val || 'Champ obligatoire'
 
 const ownerLogements = computed(() => logementsStore.items)
-
 const ownerMarkers = computed(() => {
   return ownerLogements.value
     .map((item) => ({
@@ -298,6 +538,25 @@ const positionText = computed(() => {
   return `${form.value.latitude.toFixed(6)}, ${form.value.longitude.toFixed(6)}`
 })
 
+// Edit dialog computed properties
+const editSelectedPosition = computed(() => {
+  if (!Number.isFinite(editForm.value.latitude) || !Number.isFinite(editForm.value.longitude)) return null
+  return { lat: editForm.value.latitude, lng: editForm.value.longitude }
+})
+
+const editMapCenter = computed(() => {
+  if (editSelectedPosition.value) return editSelectedPosition.value
+  if (ownerMarkers.value.length > 0) {
+    return { lat: ownerMarkers.value[0].lat, lng: ownerMarkers.value[0].lng }
+  }
+  return { lat: 36.8065, lng: 10.1815 }
+})
+
+const editPositionText = computed(() => {
+  if (!editSelectedPosition.value) return 'Cliquez sur la carte ci-dessous pour choisir la position.'
+  return `${editForm.value.latitude.toFixed(6)}, ${editForm.value.longitude.toFixed(6)}`
+})
+
 function getPhotos(item) {
   if (!item.photos) return []
   if (typeof item.photos === 'string') {
@@ -309,6 +568,84 @@ function getPhotos(item) {
 function handleMapClick(position) {
   form.value.latitude = Number(position.lat)
   form.value.longitude = Number(position.lng)
+}
+
+function handleEditMapClick(position) {
+  editForm.value.latitude = Number(position.lat)
+  editForm.value.longitude = Number(position.lng)
+}
+
+function openEditDialog(item) {
+  editingLogementId.value = item.id
+  editForm.value = {
+    adress: item.adress || '',
+    ville: item.ville || '',
+    type: item.type || null,
+    prix: Number(item.prix) || null,
+    nb_places: Number(item.nb_places) || null,
+    description: item.description || '',
+    latitude: Number(item.latitude) || null,
+    longitude: Number(item.longitude) || null
+  }
+  editDialogOpen.value = true
+}
+
+async function updateLogement() {
+  if (!editingLogementId.value) return
+
+  if (!Number.isFinite(editForm.value.latitude) || !Number.isFinite(editForm.value.longitude)) {
+    $q.notify({ message: 'Veuillez choisir une position sur la carte.', color: 'black', position: 'top' })
+    return
+  }
+
+  try {
+    const payload = {
+      adress: editForm.value.adress,
+      ville: editForm.value.ville,
+      latitude: editForm.value.latitude,
+      longitude: editForm.value.longitude,
+      type: editForm.value.type,
+      prix: editForm.value.prix,
+      nb_places: editForm.value.nb_places,
+      description: editForm.value.description
+    }
+
+    await logementsStore.update(editingLogementId.value, payload)
+
+    $q.notify({ message: 'Logement modifié avec succès !', color: 'black', position: 'top', icon: 'check' })
+    editDialogOpen.value = false
+    await fetchLogements()
+  } catch (err) {
+    $q.notify({ message: err.message || 'Erreur lors de la modification.', color: 'black', position: 'top' })
+  }
+}
+
+async function confirmDelete(item) {
+  $q.dialog({
+    title: 'Confirmer la suppression',
+    message: `Êtes-vous sûr de vouloir supprimer ce logement à ${item.adress} ?`,
+    cancel: true,
+    persistent: true,
+    color: 'black'
+  }).onOk(async () => {
+    try {
+      const authStore = useAuthStore()
+      const response = await fetch(`/api/logements/${item.id}`, {
+        method: 'DELETE',
+        headers: authStore.authHeader
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Erreur de suppression')
+      }
+
+      $q.notify({ message: 'Logement supprimé avec succès.', color: 'black', position: 'top' })
+      await fetchLogements()
+    } catch (err) {
+      $q.notify({ message: err.message || 'Erreur lors de la suppression.', color: 'black', position: 'top' })
+    }
+  })
 }
 
 function addFiles(files) {
@@ -381,9 +718,10 @@ async function deletePhoto(logementId, photoUrl) {
   }
 }
 
-async function fetchLogements() {
+async function fetchLogements(append = false) {
   try {
-    await logementsStore.fetchMine()
+    const currentPage = append ? logementsStore.pagination.page + 1 : 1
+    await logementsStore.fetchMine(currentPage, append)
 
     for (const item of logementsStore.items) {
       if (!(item.id in carouselSlides)) {
@@ -392,7 +730,9 @@ async function fetchLogements() {
     }
   } catch (err) {
     console.error(err)
-    logementsStore.items = []
+    if (!append) {
+      logementsStore.items = []
+    }
   }
 }
 
@@ -799,6 +1139,100 @@ onMounted(async () => {
   letter-spacing: 0.05em;
 }
 
+/* ═══════════ SEARCH CARD ═══════════ */
+.search-card {
+  border-radius: 4px !important;
+  border: 2px solid #000000 !important;
+  background: #ffffff;
+  margin-bottom: 16px;
+}
+
+.search-section {
+  padding: 20px 24px !important;
+}
+
+.search-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+}
+
+.search-input :deep(.q-field__control) {
+  border-radius: 0px !important;
+  border: 1px solid #000000;
+}
+
+.btn-reset-filters {
+  border-radius: 4px !important;
+  padding: 8px 16px !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  border: 2px solid #000000;
+  white-space: nowrap;
+}
+
+.filters-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.filter-select {
+  min-width: 160px;
+  flex: 1;
+}
+
+.filter-select :deep(.q-field__control) {
+  border-radius: 0px !important;
+  border: 1px solid #000000;
+}
+
+.filter-dense :deep(.q-field__control) {
+  min-height: 36px !important;
+  padding: 2px 8px !important;
+}
+
+.filter-dense :deep(.q-field__control .q-field__label) {
+  font-size: 0.8rem;
+}
+
+.filter-dense :deep(.q-field__append) {
+  padding: 4px !important;
+}
+
+.filter-input {
+  min-width: 120px;
+  flex: 1;
+  max-width: 140px;
+}
+
+.filter-input :deep(.q-field__control) {
+  border-radius: 0px !important;
+  border: 1px solid #000000;
+}
+
+@media (max-width: 768px) {
+  .search-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filters-row {
+    flex-direction: column;
+  }
+  
+  .filter-select,
+  .filter-input {
+    max-width: 100%;
+  }
+}
+
 /* ═══════════ LOGEMENTS SECTION ═══════════ */
 .logements-section {
   display: flex;
@@ -849,11 +1283,54 @@ onMounted(async () => {
   color: #666666;
 }
 
+/* ═══════════ LOAD MORE BUTTON ═══════════ */
+.load-more-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  margin-top: 16px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.btn-load-more {
+  border-radius: 4px !important;
+  padding: 12px 32px !important;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border: 2px solid #000000;
+  min-width: 280px;
+}
+
+.pagination-info {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666666;
+  font-weight: 500;
+}
+
 /* ═══════════ LOGEMENTS GRID ═══════════ */
 .logements-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
   gap: 24px;
+}
+
+.card-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 8px;
 }
 
 .card-link {

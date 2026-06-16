@@ -18,7 +18,7 @@
       </div>
     </div>
 
-    <ProfileEditDialog v-model="showEditDialog" :initial-form="editForm" :saving="saving"
+    <ProfileEditDialog v-model="showEditDialog" :initial-form="editForm" :saving="saving" :user-role="user?.role"
       @submit="handleUpdateProfile" />
   </q-page>
 </template>
@@ -48,7 +48,11 @@ const editForm = ref({
   prenom: '',
   email: '',
   tel: '',
-  photo_profil: ''
+  photo_profil: '',
+  budget: null,
+  habitudes: '',
+  universite: '',
+  recherche_ville: ''
 })
 
 const initials = computed(() => {
@@ -92,7 +96,11 @@ function openEditForm() {
     prenom: user.value.prenom || '',
     email: user.value.email || '',
     tel: user.value.tel || '',
-    photo_profil: user.value.photo_profil || ''
+    photo_profil: user.value.photo_profil || '',
+    budget: user.value.budget ?? null,
+    habitudes: user.value.habitudes || '',
+    universite: user.value.universite || '',
+    recherche_ville: user.value.recherche_ville || ''
   }
 
   showEditDialog.value = true
