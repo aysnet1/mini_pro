@@ -1,5 +1,5 @@
 
-USE logement_etudiant5;
+USE logement_etudiant404;
 
 -- Créer la table etablissement si elle n'existe pas
 CREATE TABLE IF NOT EXISTS etablissement (

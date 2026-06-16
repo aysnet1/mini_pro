@@ -1,5 +1,5 @@
 CREATE DATABASE IF NOT EXISTS logement_etudiant5;
-USE logement_etudiant5;
+USE logement_etudiant404;
 
 -- table user
 CREATE TABLE user (

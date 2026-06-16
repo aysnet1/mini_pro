@@ -9,7 +9,7 @@ ECHO ========================================
 ECHO.
 
 SET "DB_USER=root"
-SET "DB_NAME=logement_etudiant14"
+SET "DB_NAME=logement_etudiant404"
 SET "BASE_DIR=src-ssr\database"
 
 ECHO [1/3] Running base database schema...

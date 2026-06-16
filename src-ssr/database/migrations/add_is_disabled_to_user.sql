@@ -1,5 +1,5 @@
 
-use logement_etudiant5;
+use logement_etudiant404;
 ALTER TABLE user 
 ADD COLUMN is_disabled TINYINT(1) DEFAULT 0 NOT NULL AFTER role;
 
