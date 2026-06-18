@@ -448,7 +448,7 @@ const RegisterUser = async (req, res) => {
     }
 
     // Validation du rôle
-    if (!["etudiant", "proprietaire", "admin"].includes(role)) {
+    if (!["etudiant", "proprietaire"].includes(role)) {
       return res.status(400).json({ error: "Rôle invalide." });
     }
 
@@ -482,12 +482,12 @@ const RegisterUser = async (req, res) => {
           [userId, adress || null, type || null]
         );
       } else if (role === 'admin') {
-        //       await connection.rollback();
-        //   return res.status(403).json({ error: "Inscription d'admin non autorisée." });
-        await connection.query(
-          `INSERT INTO admin (id, permissions) VALUES (?, ?)`,
-          [userId, JSON.stringify(["all"])] // Exemple de permissions par défaut
-        );
+        await connection.rollback();
+        return res.status(403).json({ error: "Inscription  non autorisée." });
+        // await connection.query(
+        //   `INSERT INTO admin (id, permissions) VALUES (?, ?)`,
+        //   [userId, JSON.stringify(["all"])] // Exemple de permissions par défaut
+        // );
       }
 
       await connection.commit();
