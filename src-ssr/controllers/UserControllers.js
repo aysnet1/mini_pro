@@ -258,6 +258,7 @@ const UpdateUser = async (req, res) => {
         const studentUpdates = {};
         if (budget !== undefined) studentUpdates.budget = budget;
         if (habitudes !== undefined) studentUpdates.habitudes = habitudes;
+        // id etablissement
         if (universite !== undefined) studentUpdates.universite = universite;
         if (recherche_ville !== undefined) studentUpdates.recherche_ville = recherche_ville;
 
