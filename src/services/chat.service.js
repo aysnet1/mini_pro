@@ -137,18 +137,26 @@ export async function deleteConversation(userId, agentId) {
  * @param {string} params.message - Message utilisateur
  * @param {string} params.userId - ID utilisateur
  * @param {Array} params.chatHistory - Historique de conversation
+ * @param {Object} [params.resumeData] - Données pour reprendre après un interrupt
  * @returns {AsyncGenerator} Générateur de payloads
  */
-export async function* streamAgentFlow({ message, userId, chatHistory }) {
+export async function* streamAgentFlow({ message, userId, chatHistory, resumeData }) {
   const { streamFlow } = await import('genkit/beta/client')
+
+  const input = {
+    message,
+    userId: String(userId),
+    chatHistory,
+  }
+
+  // Ajoute resumeData si présent (pour les interrupts)
+  if (resumeData) {
+    input.resumeData = resumeData
+  }
 
   const result = streamFlow({
     url: '/api/ai/agent-flow',
-    input: {
-      message,
-      userId: String(userId),
-      chatHistory,
-    },
+    input,
   })
 
   for await (const payload of result.stream) {

@@ -19,9 +19,7 @@ export function normalizeLogement(logement) {
 
 /**
  * Fetch logements from API with filters and pagination
- * @param {Object} params - Query parameters
- * @returns {Promise<{logements: Array, pagination: Object, contexte: Object}>}
- */
+*/
 export async function fetchLogementsApi(params) {
   const queryString = params.toString()
   const response = await fetch(`/api/logements?${queryString}`)

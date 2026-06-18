@@ -87,59 +87,29 @@
                   <span>{{ msg.toolStatus }}</span>
                 </div>
 
+                <!-- Student Info Widget -->
+                <StudentInfoWidget v-if="msg.studentInfo" :student-info="msg.studentInfo" />
+
                 <!-- Text Body -->
-                <div v-if="msg.text" class="prose prose-xs text-xs leading-relaxed m-0 wrap-break-word"
+                <div v-if="msg.text && typeof msg.text === 'string'"
+                  class="prose prose-xs text-xs leading-relaxed m-0 wrap-break-word"
                   v-html="renderMarkdown(msg.text)" />
 
-                <!-- Logement Cards -->
-                <div v-if="msg.widgetData && msg.widgetData.length > 0" class="mt-3 space-y-2.5">
-                  <router-link v-for="item in msg.widgetData" :key="item.id" :to="`/logements/${item.id}`"
-                    class="chat-card-link block group">
-                    <div
-                      class="bg-white rounded-xl border border-zinc-200/60 overflow-hidden text-zinc-900 max-w-65 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02] group-hover:border-zinc-300">
-                      <div class="relative aspect-16/10 bg-zinc-100 overflow-hidden">
-                        <img :src="parsePhotos(item.photos)[0]"
-                          class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                        <div class="absolute top-2 left-2">
-                          <span
-                            class="text-[8px] font-black uppercase tracking-wider bg-white/95 backdrop-blur-sm px-2 py-1 rounded-md shadow-md">
-                            {{ item.type }}
-                          </span>
-                        </div>
-                      </div>
-                      <div class="p-3 space-y-1.5">
-                        <div class="text-xs font-bold truncate text-zinc-900">
-                          {{ item.adress }}
-                        </div>
-                        <div class="text-[10px] text-zinc-500 font-medium">
-                          {{ item.ville }} · {{ item.nb_places }} places
-                        </div>
-                        <div class="flex items-center justify-between pt-2 border-t border-zinc-100 mt-2">
-                          <span class="text-xs font-black text-zinc-900">
-                            {{ item.prix }} DT<span class="text-[9px] font-normal text-zinc-500">/m</span>
-                          </span>
-                          <span
-                            class="text-[9px] font-bold text-emerald-600 uppercase tracking-wider bg-emerald-50 px-1.5 py-0.5 rounded-md">
-                            {{ item.statut }}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </router-link>
-                </div>
+                <!-- Logement Cards Widget -->
+                <LogementCardsWidget v-if="msg.widgetData && msg.widgetData.length > 0" :widget-data="msg.widgetData"
+                  :parse-photos="parsePhotos" />
 
-                <!-- Map Display for POI -->
-                <div v-if="msg.mapData && msg.mapData.points" class="mt-3">
-                  <div class="rounded-xl overflow-hidden border border-zinc-200 shadow-md">
-                    <GoogleMap :center="{ lat: msg.mapData.points[0].lat, lng: msg.mapData.points[0].lng }" :zoom="12"
-                      style="width: 100%; height: 300px">
-                      <AdvancedMarker v-for="point in msg.mapData.points" :key="point.id" :options="{
-                        position: { lat: point.lat, lng: point.lng },
-                        title: point.name
-                      }" />
-                    </GoogleMap>
-                  </div>
-                </div>
+                <!-- Reservation Widget -->
+                <ReservationWidget v-if="msg.reservationWidget && !msg.reservationConfirm"
+                  :reservation-widget="msg.reservationWidget" @update:date="updateReservationDate"
+                  @confirm="confirmReservation" />
+
+                <!-- Reservation Confirm Widget (Interrupt) -->
+                <ReservationConfirmWidget v-if="msg.reservationConfirm" :reservation-confirm="msg.reservationConfirm"
+                  @confirm="handleReservationConfirm" @cancel="handleReservationCancel" />
+
+                <!-- Reservation Result Widget -->
+                <ReservationResultWidget v-if="msg.reservationResult" :reservation-result="msg.reservationResult" />
               </div>
             </div>
 
@@ -163,7 +133,7 @@
 
         <!-- Input Bar -->
         <q-card-section class="p-3.5 border-t border-zinc-200 bg-white sticky bottom-0">
-          <q-form @submit.prevent="handleSendMessage" class="flex items-center gap-2.5">
+          <q-form @submit.prevent="handleSendMessageWrapper" class="flex items-center gap-2.5">
             <div class="flex-1 relative">
               <q-input v-model="draft" outlined dense placeholder="Ex: studio à Kairouan max 400DT..." maxlength="400"
                 bg-color="white"
@@ -196,7 +166,11 @@ import {
   Trash2,
 } from 'lucide-vue-next'
 import { useChat } from '@/composables/useChat'
-import { GoogleMap, AdvancedMarker } from 'vue3-google-map'
+import StudentInfoWidget from './widgets/StudentInfoWidget.vue'
+import ReservationWidget from './widgets/ReservationWidget.vue'
+import ReservationResultWidget from './widgets/ReservationResultWidget.vue'
+import LogementCardsWidget from './widgets/LogementCardsWidget.vue'
+import ReservationConfirmWidget from './widgets/ReservationConfirmWidget.vue'
 
 // Props
 const props = defineProps({
@@ -219,6 +193,7 @@ const {
   isSending,
   messagesContainer,
   sendMessage: handleSendMessage,
+  handleInterruptResponse,
   clearConversation: handleClearChat,
   loadConversation,
   scrollToBottom,
@@ -256,6 +231,71 @@ watch(
 onMounted(() => {
   loadConversation()
 })
+
+// Message handler
+async function handleSendMessageWrapper(event) {
+  // Empêche le comportement par défaut du formulaire
+  if (event && event.preventDefault) {
+    event.preventDefault()
+  }
+  // Appelle sendMessage sans arguments (utilisera draft.value)
+  await handleSendMessage()
+}
+
+// Reservation helpers
+function updateReservationDate({ field, value }) {
+  const msg = messages.value.find(m => m.reservationWidget)
+  if (msg) {
+    msg.reservationWidget[field] = value
+  }
+}
+
+function confirmReservation(logementId) {
+  const msg = messages.value.find(m => m.reservationWidget)
+  if (!msg || !msg.reservationWidget) return
+
+  const widget = msg.reservationWidget
+  const { date_debut, date_fin, duree } = widget
+  if (!date_debut || !date_fin || !duree) return
+
+  const start = new Date(date_debut)
+  const end = new Date(date_fin)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  if (start < today || end <= start) return
+
+  const dureeNum = Number(duree)
+  if (!dureeNum || dureeNum < 1 || dureeNum > 12) return
+
+  // Send confirmation message to AI
+  const confirmationMessage = `Je confirme la réservation du logement ${logementId} du ${date_debut} au ${date_fin} (${duree} mois).`
+
+  draft.value = confirmationMessage
+  handleSendMessage()
+}
+
+/**
+ * Gère la confirmation de réservation via interrupt
+ */
+function handleReservationConfirm(payload) {
+  const msg = messages.value.find(m => m.reservationConfirm)
+  if (!msg) return
+
+  // Envoie la réponse à l'interrupt
+  handleInterruptResponse(msg.reservationConfirm, payload)
+}
+
+/**
+ * Gère l'annulation de réservation via interrupt
+ */
+function handleReservationCancel(payload) {
+  const msg = messages.value.find(m => m.reservationConfirm)
+  if (!msg) return
+
+  // Envoie la réponse à l'interrupt (annulation)
+  handleInterruptResponse(msg.reservationConfirm, payload)
+}
 </script>
 
 <style scoped>

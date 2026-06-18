@@ -118,10 +118,10 @@
       </router-view>
     </q-page-container>
 
-    <ChatStickyWidget v-if="user?.role === 'etudiant'" :user-id="user?.id" />
+    <ChatStickyWidget v-if="user?.role === 'etudiant' && $q.screen.gt.sm" :user-id="user?.id" />
 
     <!-- ───── Bottom Navigation for guests (mobile only) ───── -->
-    <q-footer v-if="!user" class="bottom-nav md:hidden!">
+    <q-footer v-if="!user && $q.screen.lt.md" class="bottom-nav">
       <router-link to="/" class="bnav-item" exact-active-class="bnav-active">
         <Home :size="22" :stroke-width="1.8" />
         <span>Accueil</span>
@@ -137,7 +137,7 @@
     </q-footer>
 
     <!-- ───── Bottom Navigation (mobile only) ───── -->
-    <q-footer v-if="user" class="bottom-nav md:hidden! bg-white">
+    <q-footer v-if="user && $q.screen.lt.md" class="bottom-nav bg-white">
 
       <!-- Regular tabs for etudiant -->
       <template v-if="user.role === 'etudiant'">
@@ -152,12 +152,13 @@
         </router-link>
 
         <!-- Agent IA — floating centre button -->
-        <router-link to="/messages" class="bnav-agent">
+        <div class="bnav-agent">
           <div class="bnav-agent-circle">
             <Bot :size="24" :stroke-width="2" />
+            <ChatStickyWidget v-if="user?.role === 'etudiant' && $q.screen.lt.sm" :user-id="user?.id" />
           </div>
           <span>Agent IA</span>
-        </router-link>
+        </div>
 
         <router-link to="/candidatures" class="bnav-item" exact-active-class="bnav-active">
           <ClipboardList :size="22" :stroke-width="1.8" />
@@ -183,7 +184,7 @@ import { useQuasar } from 'quasar'
 import {
   User, LogOut, Search,
   ClipboardList, Home,
-  LayoutDashboard, Bot, CircleUserRound, LogIn
+  LayoutDashboard, CircleUserRound, LogIn
 } from 'lucide-vue-next'
 import ChatStickyWidget from '@/components/chat/ChatWidget.vue'
 

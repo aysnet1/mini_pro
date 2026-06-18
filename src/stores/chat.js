@@ -48,6 +48,9 @@ function toUiMessage(row, userId, index) {
     toolLoading: false,
     widgetData: parsedWidgetData,
     mapData: null,
+    reservationWidget: null,
+    reservationResult: null,
+    studentInfo: null,
   }
 }
 

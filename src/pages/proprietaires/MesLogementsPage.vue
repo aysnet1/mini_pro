@@ -23,12 +23,24 @@
 
           <q-card-section>
             <q-form class="logement-form" @submit.prevent="createLogement">
-              <LogementLocationFields :adress="form.adress" :ville="form.ville"
-                :filtered-ville-options="filteredVilleOptions" :filtered-adress-options="filteredAdressOptions"
-                :geocode-loading="geocodeLoading" :adress-suggest-loading="adressSuggestLoading"
-                :geocode-error="geocodeError" :required-rule="requiredRule"
-                @update:adress="(val) => { form.adress = val }" @update:ville="(val) => { form.ville = val }"
-                @filter-villes="filterVilles" @filter-adresses="filterAdresses" />
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="location_on" size="16px" />
+                    Adresse
+                  </label>
+                  <q-input v-model="form.adress" placeholder="Ex: 15 Rue de la République" outlined dense color="black"
+                    :rules="[requiredRule]" class="input-modern" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="location_city" size="16px" />
+                    Ville
+                  </label>
+                  <q-input v-model="form.ville" placeholder="Ex: Kairouan" outlined dense color="black"
+                    :rules="[requiredRule]" class="input-modern" />
+                </div>
+              </div>
 
               <div class="form-grid cols-3">
                 <div class="form-group">
@@ -276,12 +288,24 @@
 
           <q-card-section>
             <q-form class="logement-form" @submit.prevent="updateLogement">
-              <LogementLocationFields :adress="editForm.adress" :ville="editForm.ville"
-                :filtered-ville-options="filteredVilleOptions" :filtered-adress-options="filteredAdressOptions"
-                :geocode-loading="geocodeLoading" :adress-suggest-loading="adressSuggestLoading"
-                :geocode-error="geocodeError" :required-rule="requiredRule"
-                @update:adress="(val) => { editForm.adress = val }" @update:ville="(val) => { editForm.ville = val }"
-                @filter-villes="filterVilles" @filter-adresses="filterAdresses" />
+              <div class="form-grid">
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="location_on" size="16px" />
+                    Adresse
+                  </label>
+                  <q-input v-model="editForm.adress" placeholder="Ex: 15 Rue de la République" outlined dense
+                    color="black" :rules="[requiredRule]" class="input-modern" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">
+                    <q-icon name="location_city" size="16px" />
+                    Ville
+                  </label>
+                  <q-input v-model="editForm.ville" placeholder="Ex: Kairouan" outlined dense color="black"
+                    :rules="[requiredRule]" class="input-modern" />
+                </div>
+              </div>
 
               <div class="form-grid cols-3">
                 <div class="form-group">
@@ -358,8 +382,7 @@ import { useQuasar } from 'quasar'
 import { useAuthStore } from '@/stores/auth'
 import { storeToRefs } from 'pinia'
 import GoogleMapCanvas from '@/components/maps/GoogleMapCanvas.vue'
-import LogementLocationFields from '@/components/logements/LogementLocationFields.vue'
-import { useAddressGeocoding } from '@/composables/useAddressGeocoding'
+
 import { useLogementsStore } from '@/stores/logements'
 import { useLogementsFilters } from '@/composables/useLogementsFilters'
 
@@ -425,16 +448,6 @@ const form = ref({
   latitude: null,
   longitude: null
 })
-
-const {
-  filteredVilleOptions,
-  filteredAdressOptions,
-  geocodeLoading,
-  adressSuggestLoading,
-  geocodeError,
-  filterVilles,
-  filterAdresses,
-} = useAddressGeocoding(form)
 
 const typeOptions = [
   { label: 'Studio', value: 'studio' },
