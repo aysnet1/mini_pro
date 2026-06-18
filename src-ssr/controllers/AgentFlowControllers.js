@@ -40,7 +40,7 @@ class AgentStream {
 const activeStreams = new Map();
 
 // ═══════════════════════════════════════════════════════════════
-//  INTERRUPT: confirmReservationInterrupt
+//  INTERRUPT:  ,
 // ═══════════════════════════════════════════════════════════════
 const confirmReservationInterrupt = ai.defineInterrupt({
   name: 'confirmReservationInterrupt',
