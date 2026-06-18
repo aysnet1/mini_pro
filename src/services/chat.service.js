@@ -33,15 +33,7 @@ export async function getConversation(userId, agentId) {
   return response.json()
 }
 
-/**
- * Envoie un nouveau message
- * @param {Object} params - Paramètres du message
- * @param {number} params.expediteurId - ID de l'expéditeur
- * @param {number} params.destinataireId - ID du destinataire
- * @param {string} params.contenu - Contenu du message
- * @param {string} params.role - Rôle (user, model, tools)
- * @returns {Promise<Object>} Réponse de l'API
- */
+
 export async function createMessage({ expediteurId, destinataireId, contenu, role = 'user' }) {
   const response = await fetch('/api/messages', {
     method: 'POST',

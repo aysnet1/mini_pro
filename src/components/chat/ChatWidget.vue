@@ -2,10 +2,18 @@
   <div>
     <!-- Floating Action Button -->
     <q-btn round unelevated no-caps
-      class="chat-fab bg-zinc-900! hover:bg-zinc-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95"
+      class="chat-fab bg-zinc-900! hidden sm:block! hover:bg-zinc-800 text-white shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-105 active:scale-95"
       @click="isOpen = true">
-      <MessageSquare :size="22" class="text-white" />
+      <Bot :size="24" :stroke-width="2" />
     </q-btn>
+    <div @click="isOpen = true" class="bnav-agent">
+
+      <div class="bnav-agent-circle">
+
+        <Bot :size="24" :stroke-width="2" />
+      </div>
+      <span>Agent IA</span>
+    </div>
 
     <!-- Chat Panel -->
     <q-dialog v-model="isOpen" position="right" full-height maximized>
@@ -171,6 +179,7 @@ import ReservationWidget from './widgets/ReservationWidget.vue'
 import ReservationResultWidget from './widgets/ReservationResultWidget.vue'
 import LogementCardsWidget from './widgets/LogementCardsWidget.vue'
 import ReservationConfirmWidget from './widgets/ReservationConfirmWidget.vue'
+import { Bot } from 'lucide-vue-next'
 
 // Props
 const props = defineProps({
@@ -299,6 +308,52 @@ function handleReservationCancel(payload) {
 </script>
 
 <style scoped>
+/* Agent IA centre button */
+.bnav-agent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  text-decoration: none;
+  color: #a1a1aa;
+  font-size: 10px;
+  font-weight: 500;
+  position: relative;
+  padding-top: 0;
+  margin-top: -20px;
+}
+
+.bnav-agent-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #18181b 0%, #3f3f46 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 4px 18px rgba(9, 9, 11, .35);
+  border: 3px solid #fff;
+  transition: transform .18s, box-shadow .18s;
+}
+
+.bnav-agent:active .bnav-agent-circle,
+.bnav-agent.router-link-active .bnav-agent-circle {
+  transform: scale(0.94);
+  box-shadow: 0 2px 10px rgba(9, 9, 11, .25);
+}
+
+.bnav-agent.router-link-active {
+  color: #09090b;
+  font-weight: 700;
+}
+
+.bnav-agent span {
+  line-height: 1;
+  margin-top: 2px;
+}
+
 .chat-fab {
   position: fixed;
   right: 24px;

@@ -31,28 +31,7 @@ const normalizeText = (value) => `${value || ''}`.trim().toLowerCase();
 
 
 
-const extractUniversityKeywords = (universite) => {
-  const stopWords = new Set(['universite', 'université', 'faculte', 'faculté', 'institut', 'iset', 'ecole', 'école']);
-  return normalizeText(universite)
-    .split(/[^\p{L}\p{N}]+/u)
-    .map((word) => word.trim())
-    .filter((word) => word.length >= 4 && !stopWords.has(word));
-};
 
-const computeUniversityMatchScore = (logement, keywords) => {
-  if (!Array.isArray(keywords) || keywords.length === 0) return 0;
-
-  const haystack = normalizeText([
-    logement.ville,
-    logement.adress,
-    logement.description,
-    Array.isArray(logement.equipemens) ? logement.equipemens.join(' ') : ''
-  ].join(' '));
-
-  return keywords.reduce((score, keyword) => {
-    return haystack.includes(keyword) ? score + 1 : score;
-  }, 0);
-};
 
 /**
  * Ajouter un nouveau logement
@@ -108,9 +87,9 @@ export const GetAllLogements = async (req, res) => {
   try {
     let query = "SELECT * FROM logement WHERE 1=1";
     const queryParams = [];
-    let studentContext = null;
+
     let selectedVille = null;
-    let selectedUniversite = null;
+
 
     const {
       q,
@@ -119,44 +98,16 @@ export const GetAllLogements = async (req, res) => {
       localisation, adress,
       ville,
       universite,
-      all_villes,
+
       statut,
       nb_places_min,
       minLat, maxLat, minLng, maxLng
     } = req.query;
 
-    const showAllVilles = ['1', 'true', 'yes', 'oui'].includes(String(all_villes || '').toLowerCase());
 
     if (req.user?.role !== 'admin') {
       query += " AND statut = ?";
       queryParams.push('disponible');
-    }
-
-    // --- Student context ---
-    if (req.user?.role === 'etudiant') {
-      const [students] = await db.query(
-        `SELECT recherche_ville, universite FROM etudiant WHERE id = ? LIMIT 1`,
-        [req.user.id]
-      );
-      studentContext = students[0] || null;
-      selectedVille = showAllVilles
-        ? null
-        : (ville || studentContext?.recherche_ville || '').trim() || null;
-      selectedUniversite = (universite || studentContext?.universite || '').trim() || null;
-
-      if (selectedVille && !q) {
-        query += " AND ville = ?";
-        queryParams.push(selectedVille);
-      } else if (!showAllVilles && !q) {
-        return res.status(200).json({
-          logements: [],
-          contexte: {
-            filtreVille: null,
-            universite: selectedUniversite,
-            message: 'Veuillez renseigner votre ville de recherche pour obtenir des logements pertinents.'
-          }
-        });
-      }
     }
 
     // --- Free-text search: q matches ville, adress, type, description ---
@@ -237,38 +188,7 @@ export const GetAllLogements = async (req, res) => {
     const [logements] = await db.query(query, queryParams);
     let normalizedLogements = logements.map(normalizeLogement);
 
-    // --- University scoring for students ---
-    if (req.user?.role === 'etudiant') {
-      const universityKeywords = extractUniversityKeywords(selectedUniversite);
-      normalizedLogements = normalizedLogements
-        .map((logement) => {
-          const universityScore = computeUniversityMatchScore(logement, universityKeywords);
-          return { ...logement, match_universite: universityScore > 0, university_score: universityScore };
-        })
-        .sort((a, b) => {
-          if (b.university_score !== a.university_score) return b.university_score - a.university_score;
-          return a.prix - b.prix;
-        });
 
-      const contextMsg = q
-        ? `Résultats pour "${q}"${selectedUniversite ? ', priorisés selon votre université.' : '.'}`
-        : showAllVilles
-          ? (selectedUniversite ? 'Résultats sur toutes les villes, priorisés selon votre université.' : 'Résultats sur toutes les villes.')
-          : (selectedUniversite ? 'Résultats filtrés selon votre ville de recherche et priorisés selon votre université.' : 'Résultats filtrés selon votre ville de recherche.');
-
-      return res.status(200).json({
-        logements: normalizedLogements,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages,
-          hasNext: page < totalPages,
-          hasPrev: page > 1
-        },
-        contexte: { filtreVille: selectedVille, universite: selectedUniversite, message: contextMsg }
-      });
-    }
 
     const contextMsg = q
       ? `Résultats pour "${q.trim()}".`

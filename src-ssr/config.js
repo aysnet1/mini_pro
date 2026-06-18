@@ -24,7 +24,7 @@ export default {
     host: 'localhost',
     port: 3306,
     user: 'root',
-    database: 'logement_etudiant',
+    database: 'logement_etudiant4',
     password: '',
     connectionLimit: 20,
   } :

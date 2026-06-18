@@ -1,6 +1,14 @@
 import db from "../database/db";
 
-
+const parseJsonField = (value, fallback = []) => {
+  if (value == null) return fallback;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};
 /**
  * Recherche inline de logements par q (adress, ville, type)
  * @route GET /api/logements/search?q=&ville=&type=&adress=

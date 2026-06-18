@@ -13,17 +13,17 @@ import {
   SetLogementStatusByAdmin,
   UploadLogementPhotos,
   DeleteLogementPhoto,
-  SearchLogements,
   GetLogementBookedDates,
   GetRecommendations
 } from '../controllers/LogementControllers.js';
+import { SearchLogements } from '../controllers/RechercheControllers.js';
 
 const logementroutes = express.Router();
 
 logementroutes.post('/', authMiddleware, isProprietaire, AddLogement);
 logementroutes.get('/public-feed', GetHomeFeed);
 logementroutes.get('/recommendations', authMiddleware, isEtudiant, GetRecommendations);
-logementroutes.get('/search', SearchLogements);
+
 logementroutes.get('/me', authMiddleware, GetMyLogements);
 logementroutes.get('/', GetAllLogements);
 logementroutes.get('/:id/booked-dates', GetLogementBookedDates);
@@ -36,4 +36,8 @@ logementroutes.delete('/:id', authMiddleware, isProprietaire, DeleteLogement);
 logementroutes.post('/:id/photos', authMiddleware, isProprietaire, uploadLogementPhotos, handleUploadErrors, UploadLogementPhotos);
 logementroutes.delete('/:id/photos', authMiddleware, isProprietaire, DeleteLogementPhoto);
 
+
+
+//oussama search
+logementroutes.get('/search', SearchLogements);
 export { logementroutes };
