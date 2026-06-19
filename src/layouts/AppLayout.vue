@@ -151,9 +151,7 @@
           <span>Explorer</span>
         </router-link>
 
-        <!-- Agent IA — floating centre button -->
-
-
+        <!-- Agent IA  -->
 
         <ChatStickyWidget v-if="user?.role === 'etudiant' && $q.screen.lt.sm" :user-id="user?.id" />
 

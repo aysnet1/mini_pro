@@ -6,7 +6,7 @@
       @click="isOpen = true">
       <Bot :size="24" :stroke-width="2" />
     </q-btn>
-    <div @click="isOpen = true" class="bnav-agent">
+    <div @click="isOpen = true" class="bnav-agent block sm:hidden!">
 
       <div class="bnav-agent-circle">
 
@@ -108,13 +108,8 @@
                   :parse-photos="parsePhotos" />
 
                 <!-- Reservation Widget -->
-                <ReservationWidget v-if="msg.reservationWidget && !msg.reservationConfirm"
-                  :reservation-widget="msg.reservationWidget" @update:date="updateReservationDate"
-                  @confirm="confirmReservation" />
-
-                <!-- Reservation Confirm Widget (Interrupt) -->
-                <ReservationConfirmWidget v-if="msg.reservationConfirm" :reservation-confirm="msg.reservationConfirm"
-                  @confirm="handleReservationConfirm" @cancel="handleReservationCancel" />
+                <ReservationWidget v-if="msg.reservationWidget" :reservation-widget="msg.reservationWidget"
+                  @update:date="updateReservationDate" @confirm="confirmReservation" />
 
                 <!-- Reservation Result Widget -->
                 <ReservationResultWidget v-if="msg.reservationResult" :reservation-result="msg.reservationResult" />
@@ -178,7 +173,6 @@ import StudentInfoWidget from './widgets/StudentInfoWidget.vue'
 import ReservationWidget from './widgets/ReservationWidget.vue'
 import ReservationResultWidget from './widgets/ReservationResultWidget.vue'
 import LogementCardsWidget from './widgets/LogementCardsWidget.vue'
-import ReservationConfirmWidget from './widgets/ReservationConfirmWidget.vue'
 import { Bot } from 'lucide-vue-next'
 
 // Props
@@ -202,7 +196,6 @@ const {
   isSending,
   messagesContainer,
   sendMessage: handleSendMessage,
-  handleInterruptResponse,
   clearConversation: handleClearChat,
   loadConversation,
   scrollToBottom,
@@ -259,51 +252,57 @@ function updateReservationDate({ field, value }) {
   }
 }
 
-function confirmReservation(logementId) {
+function confirmReservation(data) {
+  // data peut être soit un logementId, soit un objet complet
+  const logementId = typeof data === 'object' ? data.logement_id : data
+  const dateDebut = typeof data === 'object' ? data.date_debut : null
+  const dateFin = typeof data === 'object' ? data.date_fin : null
+  const duree = typeof data === 'object' ? data.duree : null
+
   const msg = messages.value.find(m => m.reservationWidget)
   if (!msg || !msg.reservationWidget) return
 
   const widget = msg.reservationWidget
-  const { date_debut, date_fin, duree } = widget
-  if (!date_debut || !date_fin || !duree) return
 
-  const start = new Date(date_debut)
-  const end = new Date(date_fin)
+  // Utilise les données passées ou celles du widget
+  const finalDateDebut = dateDebut || widget.date_debut
+  const finalDateFin = dateFin || widget.date_fin
+  const finalDuree = duree || widget.duree
+
+  if (!finalDateDebut || !finalDateFin || !finalDuree) {
+    console.warn('Données de réservation incomplètes', { finalDateDebut, finalDateFin, finalDuree })
+    return
+  }
+
+  const start = new Date(finalDateDebut)
+  const end = new Date(finalDateFin)
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  if (start < today || end <= start) return
+  if (start < today || end <= start) {
+    console.warn('Dates invalides', { start, end, today })
+    return
+  }
 
-  const dureeNum = Number(duree)
-  if (!dureeNum || dureeNum < 1 || dureeNum > 12) return
+  const dureeNum = Number(finalDuree)
+  if (!dureeNum || dureeNum < 1) {
+    console.warn('Durée invalide', dureeNum)
+    return
+  }
 
-  // Send confirmation message to AI
-  const confirmationMessage = `Je confirme la réservation du logement ${logementId} du ${date_debut} au ${date_fin} (${duree} mois).`
+  // Envoie le message de confirmation à l'IA
+  const confirmationMessage = `Je confirme la réservation du logement ${logementId} du ${finalDateDebut} au ${finalDateFin} (${finalDuree} mois).`
+
+  console.log('Confirmation réservation:', {
+    logementId,
+    dateDebut: finalDateDebut,
+    dateFin: finalDateFin,
+    duree: finalDuree,
+    message: confirmationMessage
+  })
 
   draft.value = confirmationMessage
   handleSendMessage()
-}
-
-/**
- * Gère la confirmation de réservation via interrupt
- */
-function handleReservationConfirm(payload) {
-  const msg = messages.value.find(m => m.reservationConfirm)
-  if (!msg) return
-
-  // Envoie la réponse à l'interrupt
-  handleInterruptResponse(msg.reservationConfirm, payload)
-}
-
-/**
- * Gère l'annulation de réservation via interrupt
- */
-function handleReservationCancel(payload) {
-  const msg = messages.value.find(m => m.reservationConfirm)
-  if (!msg) return
-
-  // Envoie la réponse à l'interrupt (annulation)
-  handleInterruptResponse(msg.reservationConfirm, payload)
 }
 </script>
 

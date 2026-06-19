@@ -2,14 +2,12 @@ import { genkit, z } from 'genkit/beta';
 import { googleAI } from '@genkit-ai/google-genai';
 import db from '../database/db.js';
 import { sendReservationNotification } from '../services/emailService.js';
+import { randomUUID } from 'crypto';
 
 const ai = genkit({
   plugins: [googleAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY })],
 });
 
-// ═══════════════════════════════════════════════════════════════
-//  CHUNK TYPES
-// ═══════════════════════════════════════════════════════════════
 const ChunkType = {
   THINKING: 'thinking',
   TEXT: 'text',
@@ -19,9 +17,7 @@ const ChunkType = {
   DONE: 'done',
 };
 
-// ═══════════════════════════════════════════════════════════════
-//  AgentStream — thin wrapper that keeps chunk-sending DRY
-// ═══════════════════════════════════════════════════════════════
+
 class AgentStream {
   #send;
 
@@ -39,39 +35,6 @@ class AgentStream {
 
 const activeStreams = new Map();
 
-// ═══════════════════════════════════════════════════════════════
-//  INTERRUPT:  ,
-// ═══════════════════════════════════════════════════════════════
-const confirmReservationInterrupt = ai.defineInterrupt({
-  name: 'confirmReservationInterrupt',
-  description: 'Demander à l étudiant de confirmer les dates et le logement avant de créer la réservation',
-  inputSchema: z.object({
-    question: z.string().describe('La question à poser à l étudiant'),
-    logement: z.object({
-      id: z.number().describe('ID du logement'),
-      adresse: z.string().describe('Adresse complète'),
-      ville: z.string().describe('Ville'),
-      prix: z.number().describe('Prix mensuel en DT'),
-    }).describe('Informations sur le logement'),
-    dates: z.object({
-      date_debut: z.string().describe('Date de début (YYYY-MM-DD)'),
-      date_fin: z.string().describe('Date de fin (YYYY-MM-DD)'),
-      duree: z.number().describe('Durée en mois'),
-      montant_total: z.number().describe('Montant total (prix × durée)'),
-    }).describe('Dates et durée de la réservation'),
-  }),
-  outputSchema: z.object({
-    confirmed: z.boolean().describe('true si l étudiant confirme, false sinon'),
-    logement_id: z.number().describe('ID du logement à réserver'),
-    date_debut: z.string().describe('Date de début confirmée'),
-    date_fin: z.string().describe('Date de fin confirmée'),
-    duree: z.number().describe('Durée confirmée en mois'),
-  }),
-});
-
-// ═══════════════════════════════════════════════════════════════
-//  Logement row schema (reused in tool + flow output)
-// ═══════════════════════════════════════════════════════════════
 const LogementSchema = z.object({
   id: z.number(),
   type: z.string(),
@@ -415,9 +378,7 @@ const getStudentInfoTool = ai.defineTool(
   },
 );
 
-// ═══════════════════════════════════════════════════════════════
 //  Flow: chatBotFlow
-// ═══════════════════════════════════════════════════════════════
 export const chatBotFlow = ai.defineFlow(
   {
     name: 'chatBotFlow',
@@ -437,7 +398,7 @@ export const chatBotFlow = ai.defineFlow(
   },
   async ({ message, userId, chatHistory = [], resumeData }, { sendChunk }) => {
     const stream = new AgentStream(sendChunk);
-    const sessionKey = userId ?? 'anonymous';
+    const sessionKey = userId ?? randomUUID();
 
     // get student info from db
     const [users] = await db.query(
@@ -454,6 +415,7 @@ export const chatBotFlow = ai.defineFlow(
         e.recherche_ville
       FROM user u
       LEFT JOIN etudiant e ON u.id = e.id
+      LEFT JOIN etablissement etu ON e.universite = etu.id
       WHERE u.id = ?`,
       [userId]
     );
@@ -468,15 +430,9 @@ export const chatBotFlow = ai.defineFlow(
       let resumeOption = undefined;
 
       if (resumeData && resumeData.messages && resumeData.interruptObject) {
-        // REPRENDRE APRÈS INTERRUPT
+        // Ce cas n'est plus utilisé car on a supprimé les interrupts
         messages = resumeData.messages;
-
-        // Utiliser le pattern officiel : tool.respond(interrupt, reply)
-        resumeOption = {
-          respond: [confirmReservationInterrupt.respond(resumeData.interruptObject, resumeData.replyPayload)],
-        };
       } else {
-        // DÉMARRAGE NORMAL
         messages = chatHistory
           .filter(h => h.role === 'user' || h.role === 'model')
           .slice(-6)
@@ -502,22 +458,17 @@ PROCESSUS DE RÉSERVATION STRICT (À suivre dans l'ordre) :
 3. VÉRIFICATION ANTECÉDENTS : Avant toute chose, appelle impérativement "getStudentInfo" avec l'ID de l'étudiant.
 4. CONFLIT DE RÉSERVATION : Si "hasActiveReservation" est vrai (true), informe poliment l'étudiant qu'il a déjà une réservation en cours (en attente ou acceptée) et demande-lui s'il souhaite l'annuler avant d'aller plus loin. Bloque le processus tant qu'il n'a pas annulé.
 5. COLLECTE DES DATES : Si aucune réservation n'est active, demande à l'étudiant ses dates de séjour ("date_debut" et "date_fin") au format YYYY-MM-DD, ainsi que la durée totale en mois.
-6. CONFIRMATION EXPLICITE : Avant de créer la réservation, utilise "confirmReservationInterrupt" pour afficher un récapitulatif (logement, dates, montant total) et demander confirmation explicite.
-   - Utilise l'interrupt avec : question, logement (id, adresse, ville, prix), dates (date_debut, date_fin, duree, montant_total)
-   - Attends la réponse de l'utilisateur via l'interrupt
-   - Si confirmed=true, passe à l'étape 7
-   - Si confirmed=false, remercie l'utilisateur et propose de chercher d'autres logements
-7. CRÉATION : Après confirmation explicite (confirmed=true), appelle l'outil "createReservation" avec les paramètres : logement_id, date_debut, date_fin, duree, etudiant_id
-8. CONFIRMATION : Confirme le succès à l'étudiant en lui rappelant qu'un email de notification automatique a été envoyé au propriétaire.
+6. CRÉATION : Une fois les dates confirmées par l'étudiant, appelle l'outil "createReservation" avec les paramètres : logement_id, date_debut, date_fin, duree, etudiant_id
+7. CONFIRMATION : Confirme le succès à l'étudiant en lui rappelant qu'un email de notification automatique a été envoyé au propriétaire.
 
         `,
 
         model: googleAI.model('gemini-3.5-flash'),
-        tools: [getStudentInfoTool, searchLogementsTool, createReservationTool, confirmReservationInterrupt],
+        tools: [getStudentInfoTool, searchLogementsTool, createReservationTool],
         messages,
-        resume: resumeOption, // Undefined pour démarrage normal, peuplé pour reprise après interrupt
+        resume: resumeOption,
 
-        context: { sessionKey, logementId: studentData.logement_id }, // Session persistante avec logementId
+        context: { sessionKey, logementId: studentData.logement_id },
 
         config: {
           thinkingConfig: {
@@ -531,8 +482,7 @@ PROCESSUS DE RÉSERVATION STRICT (À suivre dans l'ordre) :
 
       for await (const chunk of genStream) {
 
-        // Thought parts arrive as content parts where
-        // part.metadata?.thought === true.
+
         if (Array.isArray(chunk.content)) {
           for (const part of chunk.content) {
             if (part.metadata?.thought) {
@@ -540,9 +490,7 @@ PROCESSUS DE RÉSERVATION STRICT (À suivre dans l'ordre) :
             } else if (part.text) {
               stream.text(part.text);
             }
-            // Log tool requests/responses for debugging
-            if (part.toolRequest) console.log('[tool:request] ', JSON.stringify(part.toolRequest));
-            if (part.toolResponse) console.log('[tool:response]', JSON.stringify(part.toolResponse));
+
           }
         }
       }

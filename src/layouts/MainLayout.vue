@@ -26,7 +26,7 @@
               <q-avatar size="36px" class="bg-dark text-white text-weight-bold border-avatar shadow-sm">
                 <img v-if="user.photo_profil" :src="user.photo_profil" alt="Avatar" class="object-cover" />
                 <span v-else class="text-caption text-weight-bold">{{ user.prenom?.charAt(0) }}{{ user.nom?.charAt(0)
-                  }}</span>
+                }}</span>
               </q-avatar>
             </template>
 
@@ -38,7 +38,7 @@
                 </q-avatar>
                 <div class="column justify-center overflow-hidden">
                   <div class="text-subtitle2 text-weight-bolder text-dark text-ellipsis">{{ user.prenom }} {{ user.nom
-                    }}</div>
+                  }}</div>
                   <div class="text-caption text-grey-6 text-ellipsis q-mb-xs">{{ user.email }}</div>
                   <div class="role-badge text-weight-bolder uppercase text-center">{{ roleLabel }}</div>
                 </div>
@@ -176,7 +176,7 @@
             <div class="column overflow-hidden">
               <span class="text-body2 text-weight-bold text-white text-ellipsis">{{ user.prenom }} {{ user.nom }}</span>
               <span class="role-badge-dark text-weight-bolder text-uppercase tracking-wider q-mt-xs">{{ roleLabel
-                }}</span>
+              }}</span>
             </div>
           </div>
 
@@ -196,7 +196,6 @@
       <router-view />
     </q-page-container>
 
-    <ChatStickyWidget v-if="user?.role === 'etudiant'" :user-id="user?.id" />
 
   </q-layout>
 </template>
@@ -213,7 +212,6 @@ import {
   ClipboardList, Home, CalendarDays,
   LayoutDashboard
 } from 'lucide-vue-next'
-import ChatStickyWidget from '@/components/chat/ChatStickyWidget.vue'
 
 const $q = useQuasar()
 const router = useRouter()

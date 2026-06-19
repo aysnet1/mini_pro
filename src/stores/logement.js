@@ -3,10 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { logementService } from '@/services/logement.service'
 import { buildQuery } from '@/utils/buildQuery'
 
-/**
- * Pinia Store for managing logement search state
- * Handles filters, pagination, search results, and API calls
- */
+
 export const useLogementStore = defineStore('logement', () => {
   // State
   const loading = ref(false)
@@ -56,10 +53,8 @@ export const useLogementStore = defineStore('logement', () => {
     return !loading.value && !error.value && logements.value.length === 0
   })
 
-  // visiblePages as a ref that we update when pagination changes
   const visiblePages = ref([])
 
-  // Watch pagination and update visiblePages
   watch(
     () => ({ page: pagination.value.page, totalPages: pagination.value.totalPages }),
     ({ page, totalPages }) => {
@@ -71,7 +66,7 @@ export const useLogementStore = defineStore('logement', () => {
       const delta = 2
       const range = []
 
-      // Calculate range of pages to show around current page
+
       for (let i = Math.max(1, page - delta); i <= Math.min(totalPages, page + delta); i++) {
         range.push(i)
       }

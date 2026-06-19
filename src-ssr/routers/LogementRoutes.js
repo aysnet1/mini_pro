@@ -1,11 +1,10 @@
 import express from 'express';
 import authMiddleware from '../middlewares/authMiddleware.js';
-import { isAdmin, isEtudiant, isProprietaire } from '../middlewares/roleMiddleware.js';
+import { isAdmin, isProprietaire } from '../middlewares/roleMiddleware.js';
 import { uploadLogementPhotos, handleUploadErrors } from '../middlewares/uploadMiddleware.js';
 import {
   AddLogement,
   GetAllLogements,
-  GetHomeFeed,
   GetMyLogements,
   GetLogementById,
   UpdateLogement,
@@ -14,15 +13,13 @@ import {
   UploadLogementPhotos,
   DeleteLogementPhoto,
   GetLogementBookedDates,
-  GetRecommendations
+
 } from '../controllers/LogementControllers.js';
 import { SearchLogements } from '../controllers/RechercheControllers.js';
 
 const logementroutes = express.Router();
 
 logementroutes.post('/', authMiddleware, isProprietaire, AddLogement);
-logementroutes.get('/public-feed', GetHomeFeed);
-logementroutes.get('/recommendations', authMiddleware, isEtudiant, GetRecommendations);
 
 logementroutes.get('/me', authMiddleware, GetMyLogements);
 logementroutes.get('/', GetAllLogements);

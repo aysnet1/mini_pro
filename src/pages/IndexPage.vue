@@ -356,13 +356,13 @@ async function loadFeed() {
   loading.value = true
   try {
     const apiTasks = [
-      fetch('/api/logements/public-feed').then(res => res.json())
+      fetch('/api/recommander/public-feed').then(res => res.json())
     ]
 
     // Concurrent evaluation optimization for authenticated profiles
     if (isAuthenticated.value) {
       apiTasks.push(
-        fetch('/api/logements/recommendations', {
+        fetch('/api/recommander/recommendations', {
           headers: { ...authStore.authHeader }
         }).then(res => res.json())
       )

@@ -29,6 +29,7 @@ import { reservationroutes } from './routers/ReservationRoutes.js'
 import { messageroutes } from './routers/MessageRoutes.js'
 import { avisroutes } from './routers/AvisRoutes.js'
 import { appRoutes } from './routers/AppRoutes.js'
+import { recommanderRoutes } from './routers/recommanderRoute.js'
 
 /**
  * Create your webserver and return its instance.
@@ -63,6 +64,7 @@ export const create = defineSsrCreate((/* { ... } */) => {
   app.use('/api/messages', messageroutes)
   app.use('/api/avis', avisroutes)
   app.use('/api/admin', appRoutes)
+  app.use('/api/recommander', recommanderRoutes)
 
   return app
 })

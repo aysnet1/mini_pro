@@ -3,7 +3,7 @@
 ## Fonction 1: Rahmouni nada
 
 Backend+ frontend: Auth & Utilisateurs
--Authentification JWT (inscription / connexion) [wornking] test [missing]
+-Authentification JWT (inscription / connexion)
 -CRUD Utilisateur (Étudiant, Propriétaire, Admin)
 
 ## Fonction 2: Hassiba Massoud
@@ -11,7 +11,7 @@ Backend+ frontend: Auth & Utilisateurs
 gestion de logements (back & front)
 
 - CRUD Logement (ajout, modification, statut)
-- Gestion disponibilités & places libres
+- Gestion disponibilités
 
 ## Fonction 3: Ayser jbili
 
