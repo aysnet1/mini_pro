@@ -29,7 +29,7 @@ import { reservationroutes } from './routers/ReservationRoutes.js'
 import { messageroutes } from './routers/MessageRoutes.js'
 import { avisroutes } from './routers/AvisRoutes.js'
 import { appRoutes } from './routers/AppRoutes.js'
-import { recommanderRoutes } from './routers/recommanderRoute.js'
+import { recommanderRoutes } from './routers/RecommanderRoute.js'
 
 /**
  * Create your webserver and return its instance.
