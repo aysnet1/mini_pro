@@ -58,7 +58,7 @@
     "eslint": "^9.39.4",
     "eslint-plugin-vue": "^10.8.0",
     "globals": "^17.4.0",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.23",
     "prettier": "^3.8.1",
     "tailwindcss": "^4.3.0",
     "vite-plugin-checker": "^0.12.0",
